@@ -44,13 +44,19 @@ for _, folder in {'newvape', 'newvape/games', 'newvape/profiles', 'newvape/asset
 end
 
 if not shared.VapeDeveloper then
-	local _, subbed = pcall(function()
-		return game:HttpGet('https://github.com/sessioncodes/bapev4')
+	local cachedCommit = isfile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt') or ''
+	local success, response = pcall(function()
+		return game:HttpGet('https://api.github.com/repos/sessioncodes/bapev4/commits/main', true)
 	end)
-	local commit = subbed:find('currentOid')
-	commit = commit and subbed:sub(commit + 13, commit + 52) or nil
-	commit = commit and #commit == 40 and commit or 'main'
-	if commit == 'main' or (isfile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt') or '') ~= commit then
+	local commit
+	if success then
+		local decoded = pcall(function()
+			commit = game:GetService('HttpService'):JSONDecode(response).sha
+		end)
+		if not decoded or type(commit) ~= 'string' or #commit ~= 40 then commit = nil end
+	end
+	commit = commit or (cachedCommit ~= '' and cachedCommit or 'main')
+	if cachedCommit ~= commit then
 		wipeFolder('newvape')
 		wipeFolder('newvape/games')
 		wipeFolder('newvape/guis')
