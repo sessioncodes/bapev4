@@ -23,6 +23,18 @@ local mainapi = {
 	Windows = {}
 }
 
+local saveSequence = 0
+function mainapi:QueueSave()
+	if not self.Loaded then return end
+	saveSequence += 1
+	local sequence = saveSequence
+	task.delay(0.2, function()
+		if sequence == saveSequence and mainapi.Loaded then
+			mainapi:Save()
+		end
+	end)
+end
+
 local cloneref = cloneref or function(obj)
 	return obj
 end
@@ -3881,6 +3893,7 @@ function mainapi:CreateCategory(categorysettings)
 				mainapi:UpdateTextGUI()
 			end
 			task.spawn(modulesettings.Function, self.Enabled)
+			mainapi:QueueSave()
 		end
 
 		for i, v in components do
@@ -5151,6 +5164,7 @@ function mainapi:CreateLegit()
 				table.clear(moduleapi.Connections)
 			end
 			task.spawn(modulesettings.Function, moduleapi.Enabled)
+			mainapi:QueueSave()
 		end
 
 		back.MouseEnter:Connect(function()
