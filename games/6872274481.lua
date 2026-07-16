@@ -2000,6 +2000,10 @@ run(function()
 	local AttackRange
 	local ChargeTime
 	local UpdateRate
+	local CPS
+	local Prediction
+	local TargetPart
+	local RespectAttackSpeed
 	local AngleSlider
 	local MaxTargets
 	local Mouse
@@ -2020,6 +2024,7 @@ run(function()
 	local LegitAura
 	local Particles, Boxes = {}, {}
 	local anims, AnimDelay, AnimTween, armC0 = vape.Libraries.auraanims, tick()
+	local NextAttack = 0
 	local AttackRemote = {FireServer = function() end}
 	task.spawn(function()
 		AttackRemote = bedwars.Client:Get(remotes.AttackEntity).instance
@@ -2117,6 +2122,7 @@ run(function()
 
 				repeat
 					local attacked, sword, meta = {}, getAttackData()
+					local registeredAttack = false
 					Attacking = false
 					store.KillauraTarget = nil
 					if sword then
@@ -2137,7 +2143,8 @@ run(function()
 
 							for _, v in plrs do
 								local delta = (v.RootPart.Position - selfpos)
-								local angle = math.acos(localfacing:Dot((delta * Vector3.new(1, 0, 1)).Unit))
+								local flatdelta = delta * Vector3.new(1, 0, 1)
+								local angle = flatdelta.Magnitude > 0 and math.acos(math.clamp(localfacing:Dot(flatdelta.Unit), -1, 1)) or 0
 								if angle > (math.rad(AngleSlider.Value) / 2) then continue end
 
 								table.insert(attacked, {
@@ -2164,9 +2171,10 @@ run(function()
 
 								if delta.Magnitude > AttackRange.Value then continue end
 
-								local actualRoot = v.Character.PrimaryPart
-								if actualRoot then
-									local dir = CFrame.lookAt(selfpos, actualRoot.Position).LookVector
+								local actualRoot = v.Character and (v.Character:FindFirstChild(TargetPart.Value) or v.Character.PrimaryPart or v.RootPart)
+								if actualRoot and actualRoot.Parent and tick() >= NextAttack then
+									local targetPosition = actualRoot.Position + (actualRoot.AssemblyLinearVelocity * (Prediction.Value / 1000))
+									local dir = CFrame.lookAt(selfpos, targetPosition).LookVector
 									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
 									store.attackReach = (delta.Magnitude * 100) // 1 / 100
@@ -2181,11 +2189,20 @@ run(function()
 												cameraPosition = {value = pos},
 												cursorDirection = {value = dir}
 											},
-											targetPosition = {value = actualRoot.Position},
+											targetPosition = {value = targetPosition},
 											selfPosition = {value = pos}
 										}
 									})
+									registeredAttack = true
 								end
+							end
+
+							if registeredAttack then
+								local delay = 1 / CPS.GetRandomValue()
+								if RespectAttackSpeed.Enabled then
+									delay = math.max(delay, meta.sword.attackSpeed or 0)
+								end
+								NextAttack = tick() + delay
 							end
 						end
 					end
@@ -2276,6 +2293,29 @@ run(function()
 		Max = 120,
 		Default = 60,
 		Suffix = 'hz'
+	})
+	CPS = Killaura:CreateTwoSlider({
+		Name = 'Attacks per second',
+		Min = 1,
+		Max = 20,
+		DefaultMin = 9,
+		DefaultMax = 12
+	})
+	RespectAttackSpeed = Killaura:CreateToggle({
+		Name = 'Respect attack speed',
+		Default = true,
+		Tooltip = 'Prevents requests faster than the equipped sword can register'
+	})
+	Prediction = Killaura:CreateSlider({
+		Name = 'Movement prediction',
+		Min = 0,
+		Max = 250,
+		Default = 75,
+		Suffix = 'ms'
+	})
+	TargetPart = Killaura:CreateDropdown({
+		Name = 'Target part',
+		List = {'HumanoidRootPart', 'Head', 'UpperTorso'}
 	})
 	MaxTargets = Killaura:CreateSlider({
 		Name = 'Max targets',
