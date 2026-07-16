@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -37,14 +37,14 @@ local function wipeFolder(path)
 	end
 end
 
-for _, folder in {'newvape', 'newvape/games', 'newvape/profiles', 'newvape/assets', 'newvape/libraries', 'newvape/guis', 'newvape/cache'} do
+for _, folder in {'bapevape', 'bapevape/games', 'bapevape/profiles', 'bapevape/assets', 'bapevape/libraries', 'bapevape/guis', 'bapevape/cache'} do
 	if not isfolder(folder) then
 		makefolder(folder)
 	end
 end
 
 if not shared.VapeDeveloper then
-	local cachedCommit = isfile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt') or ''
+	local cachedCommit = isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or ''
 	local success, response = pcall(function()
 		return game:HttpGet('https://api.github.com/repos/sessioncodes/bapev4/commits/main', true)
 	end)
@@ -57,12 +57,12 @@ if not shared.VapeDeveloper then
 	end
 	commit = commit or (cachedCommit ~= '' and cachedCommit or 'main')
 	if cachedCommit ~= commit then
-		wipeFolder('newvape')
-		wipeFolder('newvape/games')
-		wipeFolder('newvape/guis')
-		wipeFolder('newvape/libraries')
+		wipeFolder('bapevape')
+		wipeFolder('bapevape/games')
+		wipeFolder('bapevape/guis')
+		wipeFolder('bapevape/libraries')
 	end
-	writefile('newvape/profiles/commit.txt', commit)
+	writefile('bapevape/profiles/commit.txt', commit)
 end
 
-return loadstring(downloadFile('newvape/main.lua'), 'main')()
+return loadstring(downloadFile('bapevape/main.lua'), 'main')()

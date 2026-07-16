@@ -27,7 +27,7 @@ local playersService = cloneref(game:GetService('Players'))
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -51,9 +51,9 @@ local function finishLoading()
 			local teleportScript = [[
 				shared.vapereload = true
 				if shared.VapeDeveloper then
-					loadstring(readfile('newvape/loader.lua'), 'loader')()
+					loadstring(readfile('bapevape/loader.lua'), 'loader')()
 				else
-					loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
+					loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
 				end
 			]]
 			if shared.VapeDeveloper then
@@ -78,20 +78,20 @@ local function finishLoading()
 	end
 end
 
-if not isfile('newvape/profiles/gui.txt') then
-	writefile('newvape/profiles/gui.txt', 'new')
+if not isfile('bapevape/profiles/gui.txt') then
+	writefile('bapevape/profiles/gui.txt', 'new')
 end
-local gui = readfile('newvape/profiles/gui.txt')
+local gui = readfile('bapevape/profiles/gui.txt')
 
-if not isfolder('newvape/assets/'..gui) then
-	makefolder('newvape/assets/'..gui)
+if not isfolder('bapevape/assets/'..gui) then
+	makefolder('bapevape/assets/'..gui)
 end
-vape = loadstring(downloadFile('newvape/guis/'..gui..'.lua'), 'gui')()
+vape = loadstring(downloadFile('bapevape/guis/'..gui..'.lua'), 'gui')()
 shared.vape = vape
 
 local urlpath
 if not shared.VapeIndependent then
-	local universalModule, universalLoadError = loadstring(downloadFile('newvape/games/universal.lua'), 'universal')
+	local universalModule, universalLoadError = loadstring(downloadFile('bapevape/games/universal.lua'), 'universal')
 	if universalModule then
 		local universalSuccess, universalRuntimeError = pcall(universalModule)
 		if not universalSuccess then
@@ -118,15 +118,15 @@ if not shared.VapeIndependent then
 		end
 	end
 	task.spawn(function(...)
-		if isfile('newvape/games/'..gameModuleId..'.lua') then
-			loadGameModule(readfile('newvape/games/'..gameModuleId..'.lua'))
+		if isfile('bapevape/games/'..gameModuleId..'.lua') then
+			loadGameModule(readfile('bapevape/games/'..gameModuleId..'.lua'))
 		else
 			if not shared.VapeDeveloper then
 				local suc, res = pcall(function()
-					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', true)
+					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', true)
 				end)
 				if suc and res ~= '404: Not Found' then
-					loadGameModule(downloadFile('newvape/games/'..gameModuleId..'.lua'))
+					loadGameModule(downloadFile('bapevape/games/'..gameModuleId..'.lua'))
 				end
 			end
 		end
