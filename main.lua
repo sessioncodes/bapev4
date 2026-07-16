@@ -103,16 +103,20 @@ shared.vape = vape
 local urlpath
 if not shared.VapeIndependent then
 	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
+	local gameModuleId = ({
+		[6872265039] = 6872274481
+	})[game.PlaceId] or game.PlaceId
+	vape.Place = gameModuleId
 	task.spawn(function(...)
-		if isfile('newvape/games/'..game.PlaceId..'.lua') then
-			loadstring(readfile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+		if isfile('newvape/games/'..gameModuleId..'.lua') then
+			loadstring(readfile('newvape/games/'..gameModuleId..'.lua'), tostring(gameModuleId))(...)
 		else
 			if not shared.VapeDeveloper then
 				local suc, res = pcall(function()
-					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', true)
 				end)
 				if suc and res ~= '404: Not Found' then
-					loadstring(downloadFile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+					loadstring(downloadFile('newvape/games/'..gameModuleId..'.lua'), tostring(gameModuleId))(...)
 				end
 			end
 		end
