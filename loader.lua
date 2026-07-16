@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), false)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -46,7 +46,7 @@ end
 if not shared.VapeDeveloper then
 	local cachedCommit = isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or ''
 	local success, response = pcall(function()
-		return game:HttpGet('https://api.github.com/repos/sessioncodes/bapev4/commits/main', true)
+		return game:HttpGet('https://api.github.com/repos/sessioncodes/bapev4/commits/main', false)
 	end)
 	local commit
 	if success then
@@ -55,8 +55,10 @@ if not shared.VapeDeveloper then
 		end)
 		if not decoded or type(commit) ~= 'string' or #commit ~= 40 then commit = nil end
 	end
-	commit = commit or (cachedCommit ~= '' and cachedCommit or 'main')
-	if cachedCommit ~= commit then
+	-- If the API is blocked or rate-limited, use raw main and invalidate only cached code.
+	-- Profiles and downloaded assets are deliberately left untouched.
+	commit = commit or 'main'
+	if commit == 'main' or cachedCommit ~= commit then
 		wipeFolder('bapevape')
 		wipeFolder('bapevape/games')
 		wipeFolder('bapevape/guis')

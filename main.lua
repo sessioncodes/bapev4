@@ -27,7 +27,7 @@ local playersService = cloneref(game:GetService('Players'))
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), false)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -53,7 +53,7 @@ local function finishLoading()
 				if shared.VapeDeveloper then
 					loadstring(readfile('bapevape/loader.lua'), 'loader')()
 				else
-					loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
+					loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/loader.lua', false), 'loader')()
 				end
 			]]
 			if shared.VapeDeveloper then
@@ -125,7 +125,7 @@ if not shared.VapeIndependent then
 		else
 			if not shared.VapeDeveloper then
 				local suc, res = pcall(function()
-					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', true)
+					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', false)
 				end)
 				if suc and res ~= '404: Not Found' then
 					loadGameModule(downloadFile('bapevape/games/'..gameModuleId..'.lua'))
