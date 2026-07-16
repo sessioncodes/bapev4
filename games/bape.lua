@@ -1751,7 +1751,7 @@ i(function()
           local xd = (wi[1].Entity.RootPart.Position * Vector3.new(1, 0, 1))
           af.character.RootPart.CFrame = CFrame.lookAt(af.character.RootPart.Position, Vector3.new(xd.X, (af.character.RootPart.Position.Y + 0.001), xd.Z))
         end
-        task.wait(math.max((1 / math.min(ua.Value, 30)), (((#wi > 0) and (#wi * 0.02)) or 0)))
+        task.wait(math.max((1 / math.min(ua.Value, 20)), (((#wi > 0) and (#wi * 0.02)) or 0)))
       until not tu.Enabled
     else
       ap.KillauraTarget = nil

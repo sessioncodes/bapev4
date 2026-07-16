@@ -3539,6 +3539,83 @@ run(function()
 end)
 	
 run(function()
+	local FPSBoost
+	local changed = setmetatable({}, {__mode = 'k'})
+	local descendantConnection
+	local generation = 0
+
+	local function setProperty(object, property, value)
+		pcall(function()
+			local properties = changed[object]
+			if not properties then
+				properties = {}
+				changed[object] = properties
+			end
+			if properties[property] == nil then properties[property] = object[property] end
+			object[property] = value
+		end)
+	end
+
+	local function optimize(object)
+		if object:IsA('PostEffect') or object:IsA('ParticleEmitter') or object:IsA('Trail') or object:IsA('Beam') then
+			setProperty(object, 'Enabled', false)
+		elseif object:IsA('BasePart') then
+			setProperty(object, 'Material', Enum.Material.SmoothPlastic)
+			setProperty(object, 'Reflectance', 0)
+			setProperty(object, 'CastShadow', false)
+		end
+	end
+
+	FPSBoost = vape.Categories.Render:CreateModule({
+		Name = 'FPSBoost',
+		Function = function(callback)
+			generation += 1
+			local currentGeneration = generation
+			if callback then
+				setProperty(lightingService, 'GlobalShadows', false)
+				local terrain = workspace:FindFirstChildWhichIsA('Terrain')
+				if terrain then
+					setProperty(terrain, 'Decoration', false)
+					setProperty(terrain, 'WaterWaveSize', 0)
+					setProperty(terrain, 'WaterWaveSpeed', 0)
+					setProperty(terrain, 'WaterReflectance', 0)
+				end
+				pcall(function()
+					setProperty(settings().Rendering, 'QualityLevel', Enum.QualityLevel.Level01)
+				end)
+				descendantConnection = workspace.DescendantAdded:Connect(function(object)
+					if FPSBoost.Enabled then optimize(object) end
+				end)
+				task.spawn(function()
+					for index, object in workspace:GetDescendants() do
+						if currentGeneration ~= generation or not FPSBoost.Enabled then break end
+						optimize(object)
+						if index % 200 == 0 then task.wait() end
+					end
+				end)
+			else
+				if descendantConnection then
+					descendantConnection:Disconnect()
+					descendantConnection = nil
+				end
+				task.spawn(function()
+					local index = 0
+					for object, properties in changed do
+						index += 1
+						for property, value in properties do
+							pcall(function() object[property] = value end)
+						end
+						if index % 200 == 0 then task.wait() end
+					end
+					table.clear(changed)
+				end)
+			end
+		end,
+		Tooltip = 'Reduces expensive lighting, effects, shadows and materials to improve FPS.'
+	})
+end)
+
+run(function()
 	local Arrows
 	local Targets
 	local Color
