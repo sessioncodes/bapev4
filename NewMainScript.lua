@@ -1,28 +1,5 @@
 shared.closet = true
-
-if identifyexecutor then
-	if string.find(string.lower(({identifyexecutor()})[1]), 'jjsploit') or string.find(string.lower(({identifyexecutor()})[1]), 'bytebreaker') then
-		getgenv().identifyexecutor = function()
-			return 'Xeno'
-		end
-	end
-	if table.find({'Xeno', '5.0'}, ({identifyexecutor()})[1]) or not (debug.getupvalue or debug.getupvalues or debug.getproto or debug.getconstants or hookfunction or hookmetamethod or getconnections or require) then
-		shared.badexecs = true
-		return loadstring(game:HttpGet("https://raw.githubusercontent.com/skidvape/KoolForRoblox/main/NewMainScript.lua", true))()
-	end
-end
-
-if require then
-	local cloneref = cloneref or function(val) return val end
-	
-	local lplr = cloneref(game:GetService('Players')).LocalPlayer
-	local suc = pcall(function() return require(lplr.PlayerScripts.PlayerModule).controls end)
-
-	if not suc then
-		shared.badexecs = true
-		return loadstring(game:HttpGet("https://raw.githubusercontent.com/skidvape/KoolForRoblox/main/NewMainScript.lua", true))()
-	end
-end
+shared.badexecs = nil
 
 local isfile = isfile or function(file)
 	local suc, res = pcall(function()

@@ -1,8 +1,8 @@
 shared.closet = true
+shared.badexecs = nil
 
 repeat task.wait() until game:IsLoaded()
 if shared.vape then shared.vape:Uninject() end
-if shared.badexecs then return end
 
 local vape
 local loadstring = function(...)
