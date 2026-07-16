@@ -1999,10 +1999,10 @@ run(function()
 	local AttackRange
 	local ChargeTime
 	local UpdateRate
-	local CPS
+	local SwingTime
 	local Prediction
 	local TargetPart
-	local RespectAttackSpeed
+	local AttackableCheck
 	local AngleSlider
 	local MaxTargets
 	local Mouse
@@ -2029,6 +2029,39 @@ run(function()
 		AttackRemote = bedwars.Client:Get(remotes.AttackEntity).instance
 	end)
 
+	local blockedStates = {
+		attackdisabled = true,
+		disableattack = true,
+		issleeping = true,
+		isstunned = true,
+		sleep = true,
+		sleeping = true,
+		statuseffectsleep = true,
+		stun = true,
+		stunned = true
+	}
+	local function hasBlockedState(obj)
+		if not obj then return false end
+		for name, value in obj:GetAttributes() do
+			local normalized = name:lower():gsub('[^%w]', '')
+			if normalized == 'canattack' and value == false then return true end
+			if blockedStates[normalized] and (value == true or (type(value) == 'number' and value > 0)) then return true end
+		end
+		for _, state in obj:GetChildren() do
+			local normalized = state.Name:lower():gsub('[^%w]', '')
+			if blockedStates[normalized] and (not state:IsA('ValueBase') or state.Value) then return true end
+		end
+		return false
+	end
+	local function canAttack()
+		local character = entitylib.character
+		local humanoid = character and character.Humanoid
+		if not entitylib.isAlive or not character or not humanoid or humanoid.Health <= 0 then return false end
+		if humanoid.PlatformStand or humanoid:GetState() == Enum.HumanoidStateType.Dead then return false end
+		if bedwars.DaoController.chargingMaid then return false end
+		return not (hasBlockedState(lplr) or hasBlockedState(character.Character))
+	end
+
 	local function getAttackData()
 		if Mouse.Enabled then
 			if not inputService:IsMouseButtonPressed(0) then return false end
@@ -2038,12 +2071,14 @@ run(function()
 			if bedwars.AppController:isLayerOpen(bedwars.UILayers.MAIN) then return false end
 		end
 
+		if AttackableCheck.Enabled and not canAttack() then return false end
+
 		local sword = Limit.Enabled and store.hand or store.tools.sword
 		if not sword or not sword.tool then return false end
 
 		local meta = bedwars.ItemMeta[sword.tool.Name]
 		if Limit.Enabled then
-			if store.hand.toolType ~= 'sword' or bedwars.DaoController.chargingMaid then return false end
+			if store.hand.toolType ~= 'sword' then return false end
 		end
 
 		if LegitAura.Enabled then
@@ -2197,11 +2232,7 @@ run(function()
 							end
 
 							if registeredAttack then
-								local delay = 1 / CPS.GetRandomValue()
-								if RespectAttackSpeed.Enabled then
-									delay = math.max(delay, meta.sword.attackSpeed or 0)
-								end
-								NextAttack = tick() + delay
+								NextAttack = tick() + (SwingTime.GetRandomValue() / 1000)
 							end
 						end
 					end
@@ -2293,17 +2324,18 @@ run(function()
 		Default = 60,
 		Suffix = 'hz'
 	})
-	CPS = Killaura:CreateTwoSlider({
-		Name = 'Attacks per second',
-		Min = 1,
-		Max = 20,
-		DefaultMin = 9,
-		DefaultMax = 12
+	SwingTime = Killaura:CreateTwoSlider({
+		Name = 'Swing time',
+		Min = 0,
+		Max = 1000,
+		DefaultMin = 80,
+		DefaultMax = 120,
+		Suffix = 'ms'
 	})
-	RespectAttackSpeed = Killaura:CreateToggle({
-		Name = 'Respect attack speed',
+	AttackableCheck = Killaura:CreateToggle({
+		Name = 'Attackable check',
 		Default = true,
-		Tooltip = 'Prevents requests faster than the equipped sword can register'
+		Tooltip = 'Pauses attacks while sleeping, stunned or otherwise unable to attack'
 	})
 	Prediction = Killaura:CreateSlider({
 		Name = 'Movement prediction',
