@@ -227,6 +227,8 @@ entitylib = loadstring(downloadFile('bapevape/libraries/entity.lua'), 'entitylib
 
 local whitelist = {
 	alreadychecked = {},
+	bapeusers = {},
+	chattag = 'BAPE USER',
 	customtags = {},
 	data = {WhitelistedUsers = {}},
 	hashes = setmetatable({}, {
@@ -457,7 +459,7 @@ run(function()
 	end
 
 	function whitelist:tag(plr, text, rich)
-		local plrtag, newtag = select(3, self:get(plr)) or self.customtags[plr.Name] or {}, ''
+		local plrtag, newtag = select(3, self:get(plr)) or self.customtags[plr.Name] or self.bapeusers[plr.Name] or {}, ''
 		if not text then return plrtag end
 		for _, v in plrtag do
 			newtag = newtag..(rich and '<font color="#'..v.color:ToHex()..'">['..v.text..']</font>' or '['..removeTags(v.text)..']')..' '
@@ -506,8 +508,8 @@ run(function()
 		if self.localprio > 0 and not self.said[plr.Name] and msg == 'helloimusinginhaler' and plr ~= lplr then
 			self.said[plr.Name] = true
 			notif('Bape', plr.Name..' is using bape!', 60)
-			self.customtags[plr.Name] = {{
-				text = 'BAPE USER',
+			self.bapeusers[plr.Name] = {{
+				text = self.chattag,
 				color = Color3.new(1, 1, 0)
 			}}
 			local newent = entitylib.getEntity(plr)
@@ -881,6 +883,29 @@ run(function()
 		table.clear(whitelist.data)
 		table.clear(whitelist)
 	end)
+end)
+
+run(function()
+	local pane = vape.Categories.Main:CreateSettingsPane({Name = 'Bape Chat'})
+	local tagBox
+	local function updateTag()
+		local value = removeTags(tagBox.Value):match('^%s*(.-)%s*$')
+		whitelist.chattag = value ~= '' and value or 'BAPE USER'
+		for name, tags in whitelist.bapeusers do
+			tags[1].text = whitelist.chattag
+			local plr = playersService:FindFirstChild(name)
+			local ent = plr and entitylib.getEntity(plr)
+			if ent then
+				entitylib.Events.EntityUpdated:Fire(ent)
+			end
+		end
+	end
+	tagBox = pane:CreateTextBox({
+		Name = 'Bape chat tag',
+		Default = 'BAPE USER',
+		Placeholder = 'BAPE USER',
+		Function = updateTag
+	})
 end)
 
 entitylib.start()
