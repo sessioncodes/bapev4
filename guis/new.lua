@@ -34,7 +34,10 @@ function mainapi:QueueSave()
 			task.wait(saveDeadline - tick())
 		end
 		savePending = false
-		if mainapi.Loaded then mainapi:Save() end
+		if mainapi.Loaded then
+			local success, err = pcall(mainapi.Save, mainapi)
+			if not success then warn('[Bape] Failed to save profile: '..tostring(err)) end
+		end
 	end)
 end
 
@@ -2483,14 +2486,17 @@ task.spawn(function()
 		if #mainapi.RainbowTable > 0 then
 			local hue = tick() * (0.2 * mainapi.RainbowSpeed.Value) % 1
 			mainapi.SuppressSave = true
-			for _, v in mainapi.RainbowTable do
-				if v.Type == 'GUISlider' then
-					v:SetValue(mainapi:Color(hue))
-				else
-					v:SetValue(hue)
+			local success, err = pcall(function()
+				for _, v in mainapi.RainbowTable do
+					if v.Type == 'GUISlider' then
+						v:SetValue(mainapi:Color(hue))
+					else
+						v:SetValue(hue)
+					end
 				end
-			end
+			end)
 			mainapi.SuppressSave = false
+			if not success then warn('[Bape] Rainbow update failed: '..tostring(err)) end
 		end
 		task.wait(#mainapi.RainbowTable > 0 and 1 / mainapi.RainbowUpdateSpeed.Value or 0.25)
 	until mainapi.Loaded == nil
