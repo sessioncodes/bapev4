@@ -227,7 +227,12 @@ entitylib = loadstring(downloadFile('bapevape/libraries/entity.lua'), 'entitylib
 
 local whitelist = {
 	alreadychecked = {},
-	bapeusers = {},
+	bapeusers = {
+		[lplr.Name] = {{
+			text = 'BAPE USER',
+			color = Color3.new(1, 1, 0)
+		}}
+	},
 	chattag = 'BAPE USER',
 	customtags = {},
 	data = {WhitelistedUsers = {}},
@@ -475,50 +480,20 @@ run(function()
 	end
 
 	local olduninject
-	function whitelist:playeradded(v, joined)
+	function whitelist:playeradded(v)
 		if self:get(v) ~= 0 then
 			if self.alreadychecked[v.UserId] then return end
 			self.alreadychecked[v.UserId] = true
-			self:hook()
 			if self.localprio == 0 then
 				olduninject = vape.Uninject
 				vape.Uninject = function()
 					notif('Bape', 'No escaping the private members :)', 10)
-				end
-				if joined then
-					task.wait(10)
-				end
-				if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-					local oldchannel = textChatService.ChatInputBarConfiguration.TargetTextChannel
-					local newchannel = cloneref(game:GetService('RobloxReplicatedStorage')).ExperienceChat.WhisperChat:InvokeServer(v.UserId)
-					if newchannel then
-						newchannel:SendAsync('helloimusinginhaler')
-					end
-					textChatService.ChatInputBarConfiguration.TargetTextChannel = oldchannel
-				elseif replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
-					replicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer('/w '..v.Name..' helloimusinginhaler', 'All')
 				end
 			end
 		end
 	end
 
 	function whitelist:process(msg, plr)
-		if plr == lplr and msg == 'helloimusinginhaler' then return true end
-
-		if self.localprio > 0 and not self.said[plr.Name] and msg == 'helloimusinginhaler' and plr ~= lplr then
-			self.said[plr.Name] = true
-			notif('Bape', plr.Name..' is using bape!', 60)
-			self.bapeusers[plr.Name] = {{
-				text = self.chattag,
-				color = Color3.new(1, 1, 0)
-			}}
-			local newent = entitylib.getEntity(plr)
-			if newent then
-				entitylib.Events.EntityUpdated:Fire(newent)
-			end
-			return true
-		end
-
 		if (self.localprio < self:get(plr) or plr == lplr) then
 			local args = msg:split(' ')
 			table.remove(args, 1)
@@ -577,6 +552,14 @@ run(function()
 
 		local exp = coreGui:FindFirstChild('ExperienceChat')
 		if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+			exp = exp or coreGui:WaitForChild('ExperienceChat', 15)
+			if not exp then
+				self.hooked = false
+				task.delay(5, function()
+					if whitelist.hook then whitelist:hook() end
+				end)
+				return
+			end
 			if exp and exp:WaitForChild('appLayout', 5) then
 				vape:Clean(exp:FindFirstChild('RCTScrollContentView', true).ChildAdded:Connect(function(obj)
 					local plr = playersService:GetPlayerByUserId(tonumber(obj.Name:split('-')[1]) or 0)
@@ -870,6 +853,8 @@ run(function()
 			end
 		end
 	}
+
+	whitelist:hook()
 
 	task.spawn(function()
 		repeat
