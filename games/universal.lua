@@ -584,6 +584,38 @@ run(function()
 					textChatService.OnIncomingMessage = nil
 				end)
 			end
+
+			-- Bedwars' current chat UI can render its own labels without using the
+			-- TextChannel prefix returned above. Tag the local rendered line as a fallback.
+			task.spawn(function()
+				local exp = coreGui:FindFirstChild('ExperienceChat') or coreGui:WaitForChild('ExperienceChat', 15)
+				if not exp then return end
+				local bound = setmetatable({}, {__mode = 'k'})
+				local prefixes = {lplr.DisplayName..':', lplr.Name..':'}
+				local function updateLabel(label)
+					local plain = removeTags(label.Text)
+					if plain:sub(1, 1) == '[' then return end
+					for _, prefix in prefixes do
+						if plain:sub(1, #prefix) == prefix then
+							label.RichText = true
+							label.Text = whitelist:tag(lplr, true, true)..label.Text
+							break
+						end
+					end
+				end
+				local function bindLabel(obj)
+					if not obj:IsA('TextLabel') or bound[obj] then return end
+					bound[obj] = true
+					updateLabel(obj)
+					vape:Clean(obj:GetPropertyChangedSignal('Text'):Connect(function()
+						task.defer(updateLabel, obj)
+					end))
+				end
+				for _, obj in exp:GetDescendants() do
+					bindLabel(obj)
+				end
+				vape:Clean(exp.DescendantAdded:Connect(bindLabel))
+			end)
 		elseif replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
 			pcall(function()
 				for _, v in getconnections(replicatedStorage.DefaultChatSystemChatEvents.OnNewMessage.OnClientEvent) do
