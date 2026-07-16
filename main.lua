@@ -1,3 +1,5 @@
+shared.closet = true
+
 repeat task.wait() until game:IsLoaded()
 if shared.vape then shared.vape:Uninject() end
 if shared.badexecs then return end

@@ -1,3 +1,5 @@
+shared.closet = true
+
 if identifyexecutor then
 	if string.find(string.lower(({identifyexecutor()})[1]), 'jjsploit') or string.find(string.lower(({identifyexecutor()})[1]), 'bytebreaker') then
 		getgenv().identifyexecutor = function()
