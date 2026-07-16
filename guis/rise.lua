@@ -2207,6 +2207,10 @@ end
 
 local notifs = {}
 function mainapi:CreateNotification(title, text, duration, type, continued)
+	if shared.closet then
+		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+		return
+	end
 	if #notifs > 0 and not continued then
 		table.insert(notifs, {
 			title,

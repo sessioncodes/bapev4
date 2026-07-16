@@ -3006,6 +3006,10 @@ function mainapi:CreateCategoryList(categorysettings)
 end
 
 function mainapi:CreateNotification(title, text, duration, type)
+	if shared.closet then
+		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+		return
+	end
 	if not self.Notifications.Enabled then return end
 	task.delay(0, function()
 		if self.ThreadFix then

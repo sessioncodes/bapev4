@@ -276,7 +276,11 @@ function mainapi:UpdateTextGUI() end
 function mainapi:UpdateGUI() end
 function mainapi:Load() self.Loaded = true end
 function mainapi:Save() end
-function mainapi:CreateNotification() end
+function mainapi:CreateNotification(title, text)
+	if shared.closet then
+		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+	end
+end
 
 function mainapi:Clean(obj)
 	if typeof(obj) == 'Instance' then

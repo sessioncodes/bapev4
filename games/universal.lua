@@ -6397,11 +6397,15 @@ run(function()
 				task.spawn(function()
 					vape:Uninject()
 				end)
-				game:GetService('StarterGui'):SetCore('SendNotification', {
-					Title = 'StaffDetector',
-					Text = 'Staff Detected\n'..plr.Name,
-					Duration = 60,
-				})
+				if shared.closet then
+					warn('[Vape] [StaffDetector] Staff Detected: '..plr.Name)
+				else
+					game:GetService('StarterGui'):SetCore('SendNotification', {
+						Title = 'StaffDetector',
+						Text = 'Staff Detected\n'..plr.Name,
+						Duration = 60,
+					})
+				end
 			elseif Mode.Value == 'ServerHop' then
 				serverHop()
 			elseif Mode.Value == 'Profile' then

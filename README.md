@@ -20,6 +20,7 @@
 1. Download the specific scripting utility of your choice.
 2. Execute the provided loadstring below.
 ```luau
+shared.closet = true
 loadstring(game:HttpGet("https://raw.githubusercontent.com/sessioncodes/bapev4/main/NewMainScript.lua", true))()
 ```
 
