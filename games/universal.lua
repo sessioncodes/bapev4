@@ -234,6 +234,7 @@ local whitelist = {
 		}}
 	},
 	chattag = 'BAPE USER',
+	chattagenabled = true,
 	customtags = {},
 	data = {WhitelistedUsers = {}},
 	hashes = setmetatable({}, {
@@ -555,7 +556,7 @@ run(function()
 				local properties = Instance.new('TextChatMessageProperties')
 				local source = message.TextSource
 				local plr = source and playersService:GetPlayerByUserId(source.UserId)
-				if plr and self.bapeusers[plr.Name] then
+				if self.chattagenabled and plr and self.bapeusers[plr.Name] then
 					properties.PrefixText = self:tag(plr, true, true)..(message.PrefixText or '')
 				end
 				return properties
@@ -593,6 +594,7 @@ run(function()
 				local bound = setmetatable({}, {__mode = 'k'})
 				local prefixes = {lplr.DisplayName..':', lplr.Name..':'}
 				local function updateLabel(label)
+					if not whitelist.chattagenabled then return end
 					local plain = removeTags(label.Text)
 					if plain:sub(1, 1) == '[' then return end
 					for _, prefix in prefixes do
@@ -902,6 +904,13 @@ end)
 run(function()
 	local pane = vape.Categories.Main:CreateSettingsPane({Name = 'Bape Chat'})
 	local tagBox
+	pane:CreateToggle({
+		Name = 'Show Bape chat tag',
+		Default = true,
+		Function = function(enabled)
+			whitelist.chattagenabled = enabled
+		end
+	})
 	local function updateTag()
 		local value = removeTags(tagBox.Value):match('^%s*(.-)%s*$')
 		whitelist.chattag = value ~= '' and value or 'BAPE USER'
