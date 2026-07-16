@@ -5612,6 +5612,9 @@ end
 function mainapi:Save(newprofile)
 	if not self.Loaded then return end
 	local targetProfile = newprofile or self.Profile
+	local profilePath = 'bapevape/profiles/'..targetProfile..self.Place..'.txt'
+	local previous = isfile(profilePath) and loadJson(profilePath) or nil
+	previous = previous or {}
 	local guidata = {
 		Categories = {},
 		Profile = targetProfile,
@@ -5619,9 +5622,9 @@ function mainapi:Save(newprofile)
 		Keybind = self.Keybind
 	}
 	local savedata = {
-		Modules = {},
-		Categories = {},
-		Legit = {}
+		Modules = previous.Modules or {},
+		Categories = previous.Categories or {},
+		Legit = previous.Legit or {}
 	}
 
 	for i, v in self.Categories do
@@ -5653,7 +5656,7 @@ function mainapi:Save(newprofile)
 	end
 
 	writefile('bapevape/profiles/'..game.GameId..'.gui.txt', httpService:JSONEncode(guidata))
-	writefile('bapevape/profiles/'..targetProfile..self.Place..'.txt', httpService:JSONEncode(savedata))
+	writefile(profilePath, httpService:JSONEncode(savedata))
 end
 
 function mainapi:SaveOptions(object, savedoptions)
