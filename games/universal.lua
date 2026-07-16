@@ -551,21 +551,39 @@ run(function()
 		self.hooked = true
 
 		if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			textChatService.OnIncomingMessage = function(message)
+			local function applyTag(message)
 				local properties = Instance.new('TextChatMessageProperties')
-
 				local source = message.TextSource
 				local plr = source and playersService:GetPlayerByUserId(source.UserId)
 				if plr and self.bapeusers[plr.Name] then
-					local prefix = properties.PrefixText
-					if prefix == '' then prefix = message.PrefixText end
-					properties.PrefixText = self:tag(plr, true, true)..prefix
+					properties.PrefixText = self:tag(plr, true, true)..(message.PrefixText or '')
 				end
 				return properties
 			end
-			vape:Clean(function()
-				textChatService.OnIncomingMessage = nil
-			end)
+
+			local channels = textChatService:FindFirstChild('TextChannels')
+			if channels then
+				local hookedChannels = {}
+				local function hookChannel(channel)
+					if not channel:IsA('TextChannel') then return end
+					channel.OnIncomingMessage = applyTag
+					hookedChannels[channel] = true
+				end
+				for _, channel in channels:GetChildren() do
+					hookChannel(channel)
+				end
+				vape:Clean(channels.ChildAdded:Connect(hookChannel))
+				vape:Clean(function()
+					for channel in hookedChannels do
+						pcall(function() channel.OnIncomingMessage = nil end)
+					end
+				end)
+			else
+				textChatService.OnIncomingMessage = applyTag
+				vape:Clean(function()
+					textChatService.OnIncomingMessage = nil
+				end)
+			end
 		elseif replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
 			pcall(function()
 				for _, v in getconnections(replicatedStorage.DefaultChatSystemChatEvents.OnNewMessage.OnClientEvent) do
