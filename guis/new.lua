@@ -5478,6 +5478,10 @@ function mainapi:Load(skipgui, profile)
 			self:CreateNotification('Bape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
 			savecheck = false
 		end
+		self.ProfileData = savedata
+		if shared.closet and savedata.Modules and savedata.Modules.Killaura then
+			warn('[Bape] Loaded preserved Killaura settings from '..self.Profile..self.Place..'.txt')
+		end
 
 		for i, v in savedata.Categories do
 			local object = self.Categories[i]
@@ -5534,6 +5538,7 @@ function mainapi:Load(skipgui, profile)
 
 		self:UpdateTextGUI(true)
 	else
+		self.ProfileData = {Categories = {}, Modules = {}, Legit = {}}
 		self:Save()
 	end
 
@@ -5541,7 +5546,8 @@ function mainapi:Load(skipgui, profile)
 		self.Downloader:Destroy()
 		self.Downloader = nil
 	end
-	self.Loaded = savecheck
+	-- A malformed profile should not leave the visible GUI in a permanently unsavable state.
+	self.Loaded = true
 	self.Categories.Main.Options.Bind:SetBind(self.Keybind)
 
 	if inputService.TouchEnabled and #self.Keybind == 1 and self.Keybind[1] == 'RightShift' then
@@ -5613,7 +5619,14 @@ function mainapi:Save(newprofile)
 	if not self.Loaded then return end
 	local targetProfile = newprofile or self.Profile
 	local profilePath = 'bapevape/profiles/'..targetProfile..self.Place..'.txt'
-	local previous = isfile(profilePath) and loadJson(profilePath) or nil
+	local previous = targetProfile == self.Profile and self.ProfileData or nil
+	if not previous and isfile(profilePath) then
+		previous = loadJson(profilePath)
+		if not previous then
+			warn('[Bape] Refusing to overwrite unreadable profile: '..profilePath)
+			return
+		end
+	end
 	previous = previous or {}
 	local guidata = {
 		Categories = {},
@@ -5657,6 +5670,10 @@ function mainapi:Save(newprofile)
 
 	writefile('bapevape/profiles/'..game.GameId..'.gui.txt', httpService:JSONEncode(guidata))
 	writefile(profilePath, httpService:JSONEncode(savedata))
+	if targetProfile == self.Profile then self.ProfileData = savedata end
+	if shared.closet and savedata.Modules.Killaura then
+		warn('[Bape] Saved profile with preserved Killaura settings: '..profilePath)
+	end
 end
 
 function mainapi:SaveOptions(object, savedoptions)
