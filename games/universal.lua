@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -73,7 +73,7 @@ local function addBlur(parent)
 	blur.Size = UDim2.new(1, 89, 1, 52)
 	blur.Position = UDim2.fromOffset(-48, -31)
 	blur.BackgroundTransparency = 1
-	blur.Image = getcustomasset('newvape/assets/new/blur.png')
+	blur.Image = getcustomasset('bapevape/assets/new/blur.png')
 	blur.ScaleType = Enum.ScaleType.Slice
 	blur.SliceCenter = Rect.new(52, 31, 261, 502)
 	blur.Parent = parent
@@ -220,10 +220,10 @@ local function motorMove(target, cf)
 	task.delay(0, part.Destroy, part)
 end
 
-local hash = loadstring(downloadFile('newvape/libraries/hash.lua'), 'hash')()
-local prediction = loadstring(downloadFile('newvape/libraries/prediction.lua'), 'prediction')()
-local execution = loadstring(downloadFile('newvape/libraries/execution.lua'), 'execution')()
-entitylib = loadstring(downloadFile('newvape/libraries/entity.lua'), 'entitylibrary')()
+local hash = loadstring(downloadFile('bapevape/libraries/hash.lua'), 'hash')()
+local prediction = loadstring(downloadFile('bapevape/libraries/prediction.lua'), 'prediction')()
+local execution = loadstring(downloadFile('bapevape/libraries/execution.lua'), 'execution')()
+entitylib = loadstring(downloadFile('bapevape/libraries/entity.lua'), 'entitylibrary')()
 
 local whitelist = {
 	alreadychecked = {},
@@ -240,7 +240,7 @@ local whitelist = {
 	said = {}
 }
 
-local koolwl = loadstring(downloadFile('newvape/libraries/whitelist.lua'))()
+local koolwl = loadstring(downloadFile('bapevape/libraries/whitelist.lua'))()
 
 vape.Libraries.entity = entitylib
 vape.Libraries.whitelist = whitelist
@@ -637,7 +637,7 @@ run(function()
 
 		if not first or whitelist.textdata ~= whitelist.olddata then
 			if not first then
-				whitelist.olddata = isfile('newvape/profiles/whitelist.json') and readfile('newvape/profiles/whitelist.json') or nil
+				whitelist.olddata = isfile('bapevape/profiles/whitelist.json') and readfile('bapevape/profiles/whitelist.json') or nil
 			end
 
 			local suc, res = pcall(function()
@@ -684,7 +684,7 @@ run(function()
 				end
 				whitelist.olddata = whitelist.textdata
 				pcall(function()
-					writefile('newvape/profiles/whitelist.json', whitelist.textdata)
+					writefile('bapevape/profiles/whitelist.json', whitelist.textdata)
 				end)
 			end
 
@@ -3542,6 +3542,8 @@ run(function()
 	local FPSBoost
 	local changed = setmetatable({}, {__mode = 'k'})
 	local descendantConnection
+	local pending = {}
+	local pendingHead, pendingTail = 1, 0
 	local generation = 0
 
 	local function setProperty(object, property, value)
@@ -3584,13 +3586,30 @@ run(function()
 					setProperty(settings().Rendering, 'QualityLevel', Enum.QualityLevel.Level01)
 				end)
 				descendantConnection = workspace.DescendantAdded:Connect(function(object)
-					if FPSBoost.Enabled then optimize(object) end
+					if FPSBoost.Enabled then
+						pendingTail += 1
+						pending[pendingTail] = object
+					end
 				end)
 				task.spawn(function()
 					for index, object in workspace:GetDescendants() do
 						if currentGeneration ~= generation or not FPSBoost.Enabled then break end
 						optimize(object)
-						if index % 200 == 0 then task.wait() end
+						if index % 100 == 0 then task.wait() end
+					end
+					while currentGeneration == generation and FPSBoost.Enabled do
+						local processed = 0
+						while pendingHead <= pendingTail and processed < 50 do
+							optimize(pending[pendingHead])
+							pending[pendingHead] = nil
+							pendingHead += 1
+							processed += 1
+						end
+						if pendingHead > pendingTail then
+							table.clear(pending)
+							pendingHead, pendingTail = 1, 0
+						end
+						task.wait(processed > 0 and 0.03 or 0.1)
 					end
 				end)
 			else
@@ -3598,6 +3617,8 @@ run(function()
 					descendantConnection:Disconnect()
 					descendantConnection = nil
 				end
+				table.clear(pending)
+				pendingHead, pendingTail = 1, 0
 				task.spawn(function()
 					local index = 0
 					for object, properties in changed do
@@ -3642,7 +3663,7 @@ run(function()
 		arrow.BorderSizePixel = 0
 		arrow.Visible = false
 
-		arrow.Image = getcustomasset('newvape/assets/new/arrowmodule.png')
+		arrow.Image = getcustomasset('bapevape/assets/new/arrowmodule.png')
 
 		arrow.ImageColor3 = entitylib.getEntityColor(ent) or Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
 		arrow.Parent = Folder
@@ -5337,7 +5358,7 @@ run(function()
 	
 	Radar = vape:CreateOverlay({
 		Name = 'Radar',
-		Icon = getcustomasset('newvape/assets/new/radaricon.png'),
+		Icon = getcustomasset('bapevape/assets/new/radaricon.png'),
 		Size = UDim2.fromOffset(14, 14),
 		Position = UDim2.fromOffset(12, 13),
 		Function = function(callback)
@@ -5557,7 +5578,7 @@ run(function()
 	
 	SessionInfo = vape:CreateOverlay({
 		Name = 'Session Info',
-		Icon = getcustomasset('newvape/assets/new/textguiicon.png'),
+		Icon = getcustomasset('bapevape/assets/new/textguiicon.png'),
 		Size = UDim2.fromOffset(16, 12),
 		Position = UDim2.fromOffset(12, 14),
 		Function = function(callback)
@@ -5625,8 +5646,8 @@ run(function()
 	Hide = SessionInfo:CreateTextList({
 		Name = 'Blacklist',
 		Tooltip = 'Name of entry to hide.',
-		Icon = getcustomasset('newvape/assets/new/blockedicon.png'),
-		Tab = getcustomasset('newvape/assets/new/blockedtab.png'),
+		Icon = getcustomasset('bapevape/assets/new/blockedicon.png'),
+		Tab = getcustomasset('bapevape/assets/new/blockedtab.png'),
 		TabSize = UDim2.fromOffset(21, 16),
 		Color = Color3.fromRGB(250, 50, 56)
 	})
