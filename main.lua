@@ -102,7 +102,16 @@ shared.vape = vape
 
 local urlpath
 if not shared.VapeIndependent then
-	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
+	local universalModule, universalLoadError = loadstring(downloadFile('newvape/games/universal.lua'), 'universal')
+	if universalModule then
+		local universalSuccess, universalRuntimeError = pcall(universalModule)
+		if not universalSuccess then
+			warn('[Vape] Universal module error: '..tostring(universalRuntimeError))
+			vape:CreateNotification('Universal module error', tostring(universalRuntimeError), 10, 'alert')
+		end
+	else
+		warn('[Vape] Universal module compile error: '..tostring(universalLoadError))
+	end
 	local gameModuleId = game.GameId == 2619619496 and 6872274481 or game.PlaceId
 	vape.Place = gameModuleId
 	local function loadGameModule(source)

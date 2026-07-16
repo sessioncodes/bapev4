@@ -6450,8 +6450,14 @@ run(function()
 					end
 	
 					local groupinfo = groupService:GetGroupInfoAsync(placeinfo.Creator.CreatorTargetId)
-					Group:SetValue(placeinfo.Creator.CreatorTargetId)
-					Role:SetValue(getLowestStaffRole(groupinfo.Roles))
+					local groupId = tostring(placeinfo.Creator.CreatorTargetId)
+					local roleId = tostring(getLowestStaffRole(groupinfo.Roles))
+					if Group then
+						if Group.SetValue then Group:SetValue(groupId) else Group.Value = groupId end
+					end
+					if Role then
+						if Role.SetValue then Role:SetValue(roleId) else Role.Value = roleId end
+					end
 				end
 	
 				if Group.Value == '' or Role.Value == '' then
