@@ -3286,9 +3286,10 @@ end
 
 function mainapi:Save(newprofile)
 	if not self.Loaded then return end
+	local targetProfile = newprofile or self.Profile
 	local guidata = {
 		Categories = {},
-		Profile = newprofile or self.Profile,
+		Profile = targetProfile,
 		Profiles = self.Profiles,
 		Keybind = self.Keybind
 	}
@@ -3327,7 +3328,7 @@ function mainapi:Save(newprofile)
 	end
 
 	writefile('newvape/profiles/'..game.GameId..'.gui.txt', httpService:JSONEncode(guidata))
-	writefile('newvape/profiles/'..self.Profile..self.Place..'.txt', httpService:JSONEncode(savedata))
+	writefile('newvape/profiles/'..targetProfile..self.Place..'.txt', httpService:JSONEncode(savedata))
 end
 
 function mainapi:SaveOptions(object, savedoptions)
