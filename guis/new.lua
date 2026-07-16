@@ -5418,6 +5418,7 @@ function mainapi:CreateNotification(title, text, duration, type)
 end
 
 function mainapi:Load(skipgui, profile)
+	self.Loaded = false
 	if not skipgui then
 		self.GUIColor:SetValue(nil, nil, nil, 4)
 	end
@@ -5619,6 +5620,7 @@ function mainapi:Save(newprofile)
 	if not self.Loaded then return end
 	local targetProfile = newprofile or self.Profile
 	local profilePath = 'bapevape/profiles/'..targetProfile..self.Place..'.txt'
+	local guiPath = 'bapevape/profiles/'..game.GameId..'.gui.txt'
 	local previous = targetProfile == self.Profile and self.ProfileData or nil
 	if not previous and isfile(profilePath) then
 		previous = loadJson(profilePath)
@@ -5628,8 +5630,9 @@ function mainapi:Save(newprofile)
 		end
 	end
 	previous = previous or {}
+	local previousGui = isfile(guiPath) and loadJson(guiPath) or {}
 	local guidata = {
-		Categories = {},
+		Categories = previousGui and previousGui.Categories or {},
 		Profile = targetProfile,
 		Profiles = self.Profiles,
 		Keybind = self.Keybind
@@ -5648,12 +5651,14 @@ function mainapi:Save(newprofile)
 	end
 
 	for i, v in self.Categories do
-		(v.Type ~= 'Category' and i ~= 'Main' and savedata or guidata).Categories[i] = {
+		local destination = v.Type ~= 'Category' and i ~= 'Main' and savedata or guidata
+		local old = destination.Categories[i]
+		destination.Categories[i] = {
 			Enabled = i ~= 'Main' and v.Button.Enabled or nil,
 			Expanded = v.Type ~= 'Overlay' and v.Expanded or nil,
 			Pinned = v.Pinned,
 			Position = {X = v.Object.Position.X.Offset, Y = v.Object.Position.Y.Offset},
-			Options = mainapi:SaveOptions(v, v.Options),
+			Options = preserveMissingOptions(mainapi:SaveOptions(v, v.Options), old and old.Options),
 			List = v.List,
 			ListEnabled = v.ListEnabled
 		}
@@ -5669,14 +5674,15 @@ function mainapi:Save(newprofile)
 	end
 
 	for i, v in self.Legit.Modules do
+		local old = savedata.Legit[i]
 		savedata.Legit[i] = {
 			Enabled = v.Enabled,
 			Position = v.Children and {X = v.Children.Position.X.Offset, Y = v.Children.Position.Y.Offset} or nil,
-			Options = mainapi:SaveOptions(v, v.Options)
+			Options = preserveMissingOptions(mainapi:SaveOptions(v, v.Options), old and old.Options)
 		}
 	end
 
-	writefile('bapevape/profiles/'..game.GameId..'.gui.txt', httpService:JSONEncode(guidata))
+	writefile(guiPath, httpService:JSONEncode(guidata))
 	writefile(profilePath, httpService:JSONEncode(savedata))
 	if targetProfile == self.Profile then self.ProfileData = savedata end
 	if shared.closet and savedata.Modules.Killaura then
@@ -6020,6 +6026,106 @@ general:CreateButton({
 		end
 	end,
 	Tooltip = 'Reloads vape for debugging purposes'
+})
+
+--[[
+	Profile Import / Export
+]]
+
+local configpane = mainapi.Categories.Main:CreateSettingsPane({Name = 'Config JSON'})
+local configText = configpane:CreateTextBox({
+	Name = 'JSON config',
+	Placeholder = 'Paste a Bape JSON config here'
+})
+-- The transfer field is temporary and should never be embedded into a profile.
+configText.Save = nil
+
+local function mergeConfig(base, incoming)
+	base = type(base) == 'table' and base or {}
+	for key, value in incoming do
+		if type(value) == 'table' and value[1] == nil and type(base[key]) == 'table' then
+			base[key] = mergeConfig(base[key], value)
+		else
+			base[key] = value
+		end
+	end
+	return base
+end
+
+configpane:CreateButton({
+	Name = 'Export JSON',
+	Function = function()
+		mainapi:Save()
+		local profilePath = 'bapevape/profiles/'..mainapi.Profile..mainapi.Place..'.txt'
+		local guiPath = 'bapevape/profiles/'..game.GameId..'.gui.txt'
+		local payload = {
+			Version = 1,
+			Profile = isfile(profilePath) and loadJson(profilePath) or mainapi.ProfileData or {},
+			GUI = isfile(guiPath) and loadJson(guiPath) or {}
+		}
+		local encoded = httpService:JSONEncode(payload)
+		writefile('bapevape/profiles/export.json', encoded)
+		local clipboard = setclipboard or toclipboard or set_clipboard
+		local copied = clipboard and pcall(clipboard, encoded)
+		if not copied then configText:SetValue(encoded, true) end
+		warn('[Bape] Exported JSON config'..(copied and ' to clipboard and ' or ' to ')..'bapevape/profiles/export.json')
+	end,
+	Tooltip = 'Copies the active profile as JSON and writes export.json'
+})
+
+configpane:CreateButton({
+	Name = 'Import JSON',
+	Function = function()
+		local encoded = configText.Value
+		if encoded == '' then
+			local clipboard = getclipboard or get_clipboard
+			if clipboard then
+				local success, value = pcall(clipboard)
+				if success then encoded = value end
+			end
+		end
+		if encoded == '' and isfile('bapevape/profiles/export.json') then
+			encoded = readfile('bapevape/profiles/export.json')
+		end
+		local success, payload = pcall(httpService.JSONDecode, httpService, encoded)
+		if not success or type(payload) ~= 'table' then
+			warn('[Bape] Config import failed: invalid JSON')
+			return
+		end
+
+		local importedProfile = payload.Profile or payload
+		if type(importedProfile) ~= 'table' then
+			warn('[Bape] Config import failed: missing profile data')
+			return
+		end
+		for _, key in {'Modules', 'Categories', 'Legit'} do
+			if importedProfile[key] ~= nil and type(importedProfile[key]) ~= 'table' then
+				warn('[Bape] Config import failed: '..key..' must be a JSON object')
+				return
+			end
+		end
+
+		local profilePath = 'bapevape/profiles/'..mainapi.Profile..mainapi.Place..'.txt'
+		local currentProfile = mainapi.ProfileData or (isfile(profilePath) and loadJson(profilePath)) or {}
+		local mergedProfile = mergeConfig(currentProfile, importedProfile)
+		mergedProfile.Modules = mergedProfile.Modules or {}
+		mergedProfile.Categories = mergedProfile.Categories or {}
+		mergedProfile.Legit = mergedProfile.Legit or {}
+		writefile(profilePath, httpService:JSONEncode(mergedProfile))
+		mainapi.ProfileData = mergedProfile
+
+		if type(payload.GUI) == 'table' then
+			local guiPath = 'bapevape/profiles/'..game.GameId..'.gui.txt'
+			local currentGUI = isfile(guiPath) and loadJson(guiPath) or {}
+			local mergedGUI = mergeConfig(currentGUI, payload.GUI)
+			mergedGUI.Profile = mainapi.Profile
+			writefile(guiPath, httpService:JSONEncode(mergedGUI))
+		end
+
+		mainapi:Load(type(payload.GUI) ~= 'table', mainapi.Profile)
+		warn('[Bape] Imported and applied JSON config')
+	end,
+	Tooltip = 'Applies JSON from the field or clipboard to the active profile'
 })
 
 --[[
