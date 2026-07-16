@@ -2494,23 +2494,13 @@ function mainapi:CreateGUI()
 	addCorner(window)
 	makeDraggable(window)
 	local logo = Instance.new('ImageLabel')
-	logo.Name = 'VapeLogo'
+	logo.Name = 'BapeLogo'
 	logo.Size = UDim2.fromOffset(62, 18)
 	logo.Position = UDim2.fromOffset(11, 10)
 	logo.BackgroundTransparency = 1
-	logo.Image = ''
+	logo.Image = getcustomasset('newvape/assets/new/guibape.png')
 	logo.ImageColor3 = select(3, uipallet.Main:ToHSV()) > 0.5 and uipallet.Text or Color3.new(1, 1, 1)
 	logo.Parent = window
-	local logoText = Instance.new('TextLabel')
-	logoText.Name = 'BapeLogo'
-	logoText.Size = UDim2.fromScale(1, 1)
-	logoText.BackgroundTransparency = 1
-	logoText.Text = 'BAPE'
-	logoText.TextColor3 = logo.ImageColor3
-	logoText.TextSize = 18
-	logoText.FontFace = uipallet.Font
-	logoText.TextXAlignment = Enum.TextXAlignment.Left
-	logoText.Parent = logo
 	local logov4 = Instance.new('ImageLabel')
 	logov4.Name = 'V4Logo'
 	logov4.Size = UDim2.fromOffset(28, 16)

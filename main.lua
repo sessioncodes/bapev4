@@ -2,16 +2,6 @@ repeat task.wait() until game:IsLoaded()
 if shared.vape then shared.vape:Uninject() end
 if shared.badexecs then return end
 
--- why do exploits fail to implement anything correctly? Is it really that hard?
-if identifyexecutor then
-	-- With the state of executors, it's not worth the risk of crashing across multiple exploits.
-	if not table.find({'AWP', 'Volt', 'Zenith', 'Nihon', 'Seliware', 'Nucleus'}, ({identifyexecutor()})[1]) then
-		getgenv().setthreadidentity = function(val)
-			return val
-		end
-	end
-end
-
 local vape
 local loadstring = function(...)
 	local res, err = loadstring(...)
