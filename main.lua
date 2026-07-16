@@ -39,9 +39,6 @@ local function downloadFile(path, func)
 end
 
 local function finishLoading()
-	if setthreadidentity then
-		pcall(setthreadidentity, 8)
-	end
 	vape.Init = nil
 	vape:Load()
 	task.spawn(function()

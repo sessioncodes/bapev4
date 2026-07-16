@@ -17,7 +17,7 @@ local mainapi = {
 	RainbowUpdateSpeed = {Value = 60},
 	RainbowTable = {},
 	Scale = {Value = 1},
-	ThreadFix = setthreadidentity and true or false,
+	ThreadFix = false,
 	ToggleNotifications = {},
 	Version = '4.18',
 	Windows = {}
@@ -2494,7 +2494,8 @@ function mainapi:CreateGUI()
 	addCorner(window)
 	makeDraggable(window)
 	local logo = Instance.new('ImageLabel')
-	logo.Name = 'BapeLogo'
+	-- Kept for compatibility with internal GUI update paths; the displayed asset is BAPE.
+	logo.Name = 'VapeLogo'
 	logo.Size = UDim2.fromOffset(62, 18)
 	logo.Position = UDim2.fromOffset(11, 10)
 	logo.BackgroundTransparency = 1
