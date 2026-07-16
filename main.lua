@@ -101,8 +101,10 @@ if not shared.VapeIndependent then
 	else
 		warn('[Bape] Universal module compile error: '..tostring(universalLoadError))
 	end
+	local isBedwars = game.GameId == 2619619496 or game.PlaceId == 6872265039 or game.PlaceId == 6872274481
 	local gameModuleId = game.GameId == 2619619496 and 6872274481 or game.PlaceId
-	vape.Place = gameModuleId
+	-- Lobby and match modules share one profile without forcing the match module to run in the lobby.
+	vape.Place = isBedwars and 6872274481 or gameModuleId
 	local function loadGameModule(source)
 		local module, loadError = loadstring(source, tostring(gameModuleId))
 		if not module then
