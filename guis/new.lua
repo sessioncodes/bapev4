@@ -5639,6 +5639,13 @@ function mainapi:Save(newprofile)
 		Categories = previous.Categories or {},
 		Legit = previous.Legit or {}
 	}
+	local function preserveMissingOptions(current, old)
+		current = current or {}
+		for name, value in (old or {}) do
+			if current[name] == nil then current[name] = value end
+		end
+		return current
+	end
 
 	for i, v in self.Categories do
 		(v.Type ~= 'Category' and i ~= 'Main' and savedata or guidata).Categories[i] = {
@@ -5653,10 +5660,11 @@ function mainapi:Save(newprofile)
 	end
 
 	for i, v in self.Modules do
+		local old = savedata.Modules[i]
 		savedata.Modules[i] = {
 			Enabled = v.Enabled,
 			Bind = v.Bind.Button and {Mobile = true, X = v.Bind.Button.Position.X.Offset, Y = v.Bind.Button.Position.Y.Offset} or v.Bind,
-			Options = mainapi:SaveOptions(v, true)
+			Options = preserveMissingOptions(mainapi:SaveOptions(v, true), old and old.Options)
 		}
 	end
 
