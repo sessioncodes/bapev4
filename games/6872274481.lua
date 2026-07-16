@@ -2000,7 +2000,6 @@ run(function()
 	local ChargeTime
 	local UpdateRate
 	local SwingTime
-	local Prediction
 	local TargetPart
 	local AttackableCheck
 	local AngleSlider
@@ -2099,23 +2098,6 @@ run(function()
 				end
 
 				if Animation.Enabled and not (identifyexecutor and table.find({'Argon', 'Delta'}, ({identifyexecutor()})[1])) then
-					local fake = {
-						Controllers = {
-							ViewmodelController = {
-								isVisible = function()
-									return not Attacking
-								end,
-								playAnimation = function(...)
-									if not Attacking then
-										bedwars.ViewmodelController:playAnimation(select(2, ...))
-									end
-								end
-							}
-						}
-					}
-					debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, fake)
-					debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, fake)
-
 					task.spawn(function()
 						local started = false
 						repeat
@@ -2207,7 +2189,7 @@ run(function()
 
 								local actualRoot = v.Character and (v.Character:FindFirstChild(TargetPart.Value) or v.Character.PrimaryPart or v.RootPart)
 								if actualRoot and actualRoot.Parent and tick() >= NextAttack then
-									local targetPosition = actualRoot.Position + (actualRoot.AssemblyLinearVelocity * (Prediction.Value / 1000))
+									local targetPosition = actualRoot.Position
 									local dir = CFrame.lookAt(selfpos, targetPosition).LookVector
 									local pos = selfpos + dir * math.max(delta.Magnitude - 14.399, 0)
 									bedwars.SwordController.lastAttack = workspace:GetServerTimeNow()
@@ -2232,7 +2214,7 @@ run(function()
 							end
 
 							if registeredAttack then
-								NextAttack = tick() + (SwingTime.GetRandomValue() / 1000)
+								NextAttack = tick() + (SwingTime.Value / 1000)
 							end
 						end
 					end
@@ -2270,8 +2252,6 @@ run(function()
 						lplr.PlayerGui.MobileUI['2'].Visible = true
 					end)
 				end
-				debug.setupvalue(oldSwing or bedwars.SwordController.playSwordEffect, 6, bedwars.Knit)
-				debug.setupvalue(bedwars.ScytheController.playLocalAnimation, 3, bedwars.Knit)
 				Attacking = false
 				if armC0 then
 					AnimTween = tweenService:Create(gameCamera.Viewmodel.RightHand.RightWrist, TweenInfo.new(AnimationTween.Enabled and 0.001 or 0.3, Enum.EasingStyle.Exponential), {
@@ -2324,25 +2304,17 @@ run(function()
 		Default = 60,
 		Suffix = 'hz'
 	})
-	SwingTime = Killaura:CreateTwoSlider({
+	SwingTime = Killaura:CreateSlider({
 		Name = 'Swing time',
 		Min = 0,
 		Max = 1000,
-		DefaultMin = 80,
-		DefaultMax = 120,
+		Default = 100,
 		Suffix = 'ms'
 	})
 	AttackableCheck = Killaura:CreateToggle({
 		Name = 'Attackable check',
 		Default = true,
 		Tooltip = 'Pauses attacks while sleeping, stunned or otherwise unable to attack'
-	})
-	Prediction = Killaura:CreateSlider({
-		Name = 'Movement prediction',
-		Min = 0,
-		Max = 250,
-		Default = 75,
-		Suffix = 'ms'
 	})
 	TargetPart = Killaura:CreateDropdown({
 		Name = 'Target part',
