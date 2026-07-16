@@ -141,8 +141,8 @@ if not shared.VapeIndependent then
 				end
 			end
 		end
+		finishLoading()
 	end)
-	finishLoading()
 else
 	vape.Init = finishLoading
 	return vape
