@@ -103,20 +103,32 @@ shared.vape = vape
 local urlpath
 if not shared.VapeIndependent then
 	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
-	local gameModuleId = ({
-		[6872265039] = 6872274481
-	})[game.PlaceId] or game.PlaceId
+	local gameModuleId = game.GameId == 2619619496 and 6872274481 or game.PlaceId
 	vape.Place = gameModuleId
+	local function loadGameModule(source)
+		local module, loadError = loadstring(source, tostring(gameModuleId))
+		if not module then
+			warn('[Vape] Failed to compile game module '..gameModuleId..': '..tostring(loadError))
+			vape:CreateNotification('Game module failed', 'Compile error: '..tostring(loadError), 10, 'alert')
+			return
+		end
+
+		local success, runtimeError = pcall(module)
+		if not success then
+			warn('[Vape] Failed to run game module '..gameModuleId..': '..tostring(runtimeError))
+			vape:CreateNotification('Game module failed', tostring(runtimeError), 10, 'alert')
+		end
+	end
 	task.spawn(function(...)
 		if isfile('newvape/games/'..gameModuleId..'.lua') then
-			loadstring(readfile('newvape/games/'..gameModuleId..'.lua'), tostring(gameModuleId))(...)
+			loadGameModule(readfile('newvape/games/'..gameModuleId..'.lua'))
 		else
 			if not shared.VapeDeveloper then
 				local suc, res = pcall(function()
 					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', true)
 				end)
 				if suc and res ~= '404: Not Found' then
-					loadstring(downloadFile('newvape/games/'..gameModuleId..'.lua'), tostring(gameModuleId))(...)
+					loadGameModule(downloadFile('newvape/games/'..gameModuleId..'.lua'))
 				end
 			end
 		end
