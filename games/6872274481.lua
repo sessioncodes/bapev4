@@ -2039,16 +2039,37 @@ run(function()
 		stun = true,
 		stunned = true
 	}
+	local function isBlockedStateName(name)
+		local normalized = name:lower():gsub('[^%w]', '')
+		return blockedStates[normalized]
+			or normalized:find('sleep', 1, true)
+			or normalized:find('stun', 1, true)
+			or normalized:find('frozen', 1, true)
+			or normalized:find('attackdisabled', 1, true)
+			or normalized:find('disableattack', 1, true)
+	end
+	local function isActiveStateValue(value)
+		if value == true then return true end
+		if type(value) == 'number' then return value > 0 end
+		if type(value) == 'string' then return isBlockedStateName(value) and true or false end
+		return false
+	end
 	local function hasBlockedState(obj)
 		if not obj then return false end
 		for name, value in obj:GetAttributes() do
 			local normalized = name:lower():gsub('[^%w]', '')
 			if normalized == 'canattack' and value == false then return true end
-			if blockedStates[normalized] and (value == true or (type(value) == 'number' and value > 0)) then return true end
+			if isBlockedStateName(normalized) and isActiveStateValue(value) then return true end
+		end
+		for _, tag in collectionService:GetTags(obj) do
+			if isBlockedStateName(tag) then return true end
 		end
 		for _, state in obj:GetChildren() do
-			local normalized = state.Name:lower():gsub('[^%w]', '')
-			if blockedStates[normalized] and (not state:IsA('ValueBase') or state.Value) then return true end
+			if state:IsA('ValueBase') then
+				if (isBlockedStateName(state.Name) or (type(state.Value) == 'string' and isBlockedStateName(state.Value))) and isActiveStateValue(state.Value) then return true end
+			elseif isBlockedStateName(state.Name) then
+				return true
+			end
 		end
 		return false
 	end
@@ -2058,7 +2079,10 @@ run(function()
 		if not entitylib.isAlive or not character or not humanoid or humanoid.Health <= 0 then return false end
 		if humanoid.PlatformStand or humanoid:GetState() == Enum.HumanoidStateType.Dead then return false end
 		if bedwars.DaoController.chargingMaid then return false end
-		return not (hasBlockedState(lplr) or hasBlockedState(character.Character))
+		return not (hasBlockedState(lplr)
+			or hasBlockedState(character.Character)
+			or hasBlockedState(humanoid)
+			or hasBlockedState(character.RootPart))
 	end
 
 	local function getAttackData()
