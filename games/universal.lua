@@ -550,33 +550,28 @@ run(function()
 		if self.hooked then return end
 		self.hooked = true
 
-		local exp = coreGui:FindFirstChild('ExperienceChat')
 		if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			exp = exp or coreGui:WaitForChild('ExperienceChat', 15)
-			if not exp then
-				self.hooked = false
-				task.delay(5, function()
-					if whitelist.hook then whitelist:hook() end
-				end)
-				return
-			end
-			if exp and exp:WaitForChild('appLayout', 5) then
-				vape:Clean(exp:FindFirstChild('RCTScrollContentView', true).ChildAdded:Connect(function(obj)
-					local plr = playersService:GetPlayerByUserId(tonumber(obj.Name:split('-')[1]) or 0)
-					obj = obj:FindFirstChild('TextMessage', true)
-					if obj and obj:IsA('TextLabel') then
-						if plr then
-							self:newchat(obj, plr, true)
-							obj:GetPropertyChangedSignal('Text'):Wait()
-							self:newchat(obj, plr)
-						end
+			local oldIncoming = textChatService.OnIncomingMessage
+			textChatService.OnIncomingMessage = function(message)
+				local properties
+				if oldIncoming then
+					local success, result = pcall(oldIncoming, message)
+					if success then properties = result end
+				end
+				properties = properties or Instance.new('TextChatMessageProperties')
 
-						if obj.ContentText:sub(1, 35) == 'You are now privately chatting with' then
-							obj.Visible = false
-						end
-					end
-				end))
+				local source = message.TextSource
+				local plr = source and playersService:GetPlayerByUserId(source.UserId)
+				if plr and self.bapeusers[plr.Name] then
+					local prefix = properties.PrefixText
+					if prefix == '' then prefix = message.PrefixText end
+					properties.PrefixText = self:tag(plr, true, true)..prefix
+				end
+				return properties
 			end
+			vape:Clean(function()
+				textChatService.OnIncomingMessage = oldIncoming
+			end)
 		elseif replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
 			pcall(function()
 				for _, v in getconnections(replicatedStorage.DefaultChatSystemChatEvents.OnNewMessage.OnClientEvent) do
@@ -595,16 +590,6 @@ run(function()
 			end)
 		end
 
-		if exp then
-			local bubblechat = exp:WaitForChild('bubbleChat', 5)
-			if bubblechat then
-				vape:Clean(bubblechat.DescendantAdded:Connect(function(newbubble)
-					if newbubble:IsA('TextLabel') and newbubble.Text:find('helloimusinginhaler') then
-						newbubble.Parent.Parent.Visible = false
-					end
-				end))
-			end
-		end
 	end
 
 	function whitelist:update(first)
