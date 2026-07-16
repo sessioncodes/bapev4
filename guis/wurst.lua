@@ -278,7 +278,7 @@ function mainapi:Load() self.Loaded = true end
 function mainapi:Save() end
 function mainapi:CreateNotification(title, text)
 	if shared.closet then
-		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+		warn(('[Bape] [%s] %s'):format(tostring(title), tostring(text)))
 	end
 end
 

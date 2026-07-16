@@ -16,7 +16,7 @@ local vape
 local loadstring = function(...)
 	local res, err = loadstring(...)
 	if err and vape then
-		vape:CreateNotification('Vape', 'Failed to load : '..err, 30, 'alert')
+		vape:CreateNotification('Bape', 'Failed to load : '..err, 30, 'alert')
 	end
 	return res
 end
@@ -49,6 +49,9 @@ local function downloadFile(path, func)
 end
 
 local function finishLoading()
+	if setthreadidentity then
+		pcall(setthreadidentity, 8)
+	end
 	vape.Init = nil
 	vape:Load()
 	task.spawn(function()
@@ -109,25 +112,25 @@ if not shared.VapeIndependent then
 	if universalModule then
 		local universalSuccess, universalRuntimeError = pcall(universalModule)
 		if not universalSuccess then
-			warn('[Vape] Universal module error: '..tostring(universalRuntimeError))
+			warn('[Bape] Universal module error: '..tostring(universalRuntimeError))
 			vape:CreateNotification('Universal module error', tostring(universalRuntimeError), 10, 'alert')
 		end
 	else
-		warn('[Vape] Universal module compile error: '..tostring(universalLoadError))
+		warn('[Bape] Universal module compile error: '..tostring(universalLoadError))
 	end
 	local gameModuleId = game.GameId == 2619619496 and 6872274481 or game.PlaceId
 	vape.Place = gameModuleId
 	local function loadGameModule(source)
 		local module, loadError = loadstring(source, tostring(gameModuleId))
 		if not module then
-			warn('[Vape] Failed to compile game module '..gameModuleId..': '..tostring(loadError))
+			warn('[Bape] Failed to compile game module '..gameModuleId..': '..tostring(loadError))
 			vape:CreateNotification('Game module failed', 'Compile error: '..tostring(loadError), 10, 'alert')
 			return
 		end
 
 		local success, runtimeError = pcall(module)
 		if not success then
-			warn('[Vape] Failed to run game module '..gameModuleId..': '..tostring(runtimeError))
+			warn('[Bape] Failed to run game module '..gameModuleId..': '..tostring(runtimeError))
 			vape:CreateNotification('Game module failed', tostring(runtimeError), 10, 'alert')
 		end
 	end

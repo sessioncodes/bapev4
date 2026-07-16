@@ -39,16 +39,16 @@ function Execution:Send()
 
     if suc and res then
         if res.StatusCode == 429 then
-            Library:CreateNotification('Vape', '[API] Ratelimited? (how bro you just executed)', 3)
+            Library:CreateNotification('Bape', '[API] Ratelimited? (how bro you just executed)', 3)
         elseif res.StatusCode == 400 then
-            Library:CreateNotification('Vape', '[API] Failed to do a check (bro what)', 3)
+            Library:CreateNotification('Bape', '[API] Failed to do a check (bro what)', 3)
         elseif res.StatusCode ~= 200 then
-            Library:CreateNotification('Vape', '[API] Unknown status code: bad internet?', 3)
+            Library:CreateNotification('Bape', '[API] Unknown status code: bad internet?', 3)
         end
     end
 
     if not suc then
-        Library:CreateNotification('Vape', '[API] Failed to track execution log: bad internet?', 3)
+        Library:CreateNotification('Bape', '[API] Failed to track execution log: bad internet?', 3)
     end
 end
 

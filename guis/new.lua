@@ -2498,9 +2498,19 @@ function mainapi:CreateGUI()
 	logo.Size = UDim2.fromOffset(62, 18)
 	logo.Position = UDim2.fromOffset(11, 10)
 	logo.BackgroundTransparency = 1
-	logo.Image = getcustomasset('newvape/assets/new/guivape.png')
+	logo.Image = ''
 	logo.ImageColor3 = select(3, uipallet.Main:ToHSV()) > 0.5 and uipallet.Text or Color3.new(1, 1, 1)
 	logo.Parent = window
+	local logoText = Instance.new('TextLabel')
+	logoText.Name = 'BapeLogo'
+	logoText.Size = UDim2.fromScale(1, 1)
+	logoText.BackgroundTransparency = 1
+	logoText.Text = 'BAPE'
+	logoText.TextColor3 = logo.ImageColor3
+	logoText.TextSize = 18
+	logoText.FontFace = uipallet.Font
+	logoText.TextXAlignment = Enum.TextXAlignment.Left
+	logoText.Parent = logo
 	local logov4 = Instance.new('ImageLabel')
 	logov4.Name = 'V4Logo'
 	logov4.Size = UDim2.fromOffset(28, 16)
@@ -2572,7 +2582,7 @@ function mainapi:CreateGUI()
 	settingsversion.Size = UDim2.new(1, 0, 0, 16)
 	settingsversion.Position = UDim2.new(0, 0, 1, -16)
 	settingsversion.BackgroundTransparency = 1
-	settingsversion.Text = 'Vape '..mainapi.Version..' '..(
+	settingsversion.Text = 'Bape '..mainapi.Version..' '..(
 		isfile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt'):sub(1, 6) or ''
 	)..' '
 	settingsversion.TextColor3 = color.Dark(uipallet.Text, 0.43)
@@ -5279,7 +5289,7 @@ end
 
 function mainapi:CreateNotification(title, text, duration, type)
 	if shared.closet then
-		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+		warn(('[Bape] [%s] %s'):format(tostring(title), tostring(text)))
 		return
 	end
 	if not self.Notifications.Enabled then return end
@@ -5387,7 +5397,7 @@ function mainapi:Load(skipgui, profile)
 		guidata = loadJson('newvape/profiles/'..game.GameId..'.gui.txt')
 		if not guidata then
 			guidata = {Categories = {}}
-			self:CreateNotification('Vape', 'Failed to load GUI settings.', 10, 'alert')
+			self:CreateNotification('Bape', 'Failed to load GUI settings.', 10, 'alert')
 			savecheck = false
 		end
 
@@ -5434,7 +5444,7 @@ function mainapi:Load(skipgui, profile)
 		local savedata = loadJson('newvape/profiles/'..self.Profile..self.Place..'.txt')
 		if not savedata then
 			savedata = {Categories = {}, Modules = {}, Legit = {}}
-			self:CreateNotification('Vape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
+			self:CreateNotification('Bape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
 			savecheck = false
 		end
 
@@ -5931,7 +5941,7 @@ general:CreateButton({
 			loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end,
-	Tooltip = 'This will set your profile to the default settings of Vape'
+	Tooltip = 'This will set your profile to the default settings of Bape'
 })
 general:CreateButton({
 	Name = 'Self destruct',

@@ -1,7 +1,7 @@
 local loadstring = function(...)
 	local res, err = loadstring(...)
 	if err and vape then
-		vape:CreateNotification('Vape', 'Failed to load : '..err, 30, 'alert')
+		vape:CreateNotification('Bape', 'Failed to load : '..err, 30, 'alert')
 	end
 	return res
 end
@@ -153,7 +153,7 @@ local function serverHop(pointer, filter)
 		table.insert(visited, game.JobId)
 	end
 	if not pointer then
-		notif('Vape', 'Searching for an available server.', 2)
+		notif('Bape', 'Searching for an available server.', 2)
 	end
 
 	local suc, httpdata = pcall(function()
@@ -166,7 +166,7 @@ local function serverHop(pointer, filter)
 				cacheExpire, cache = tick() + 60, httpdata
 				table.insert(attempted, v.id)
 
-				notif('Vape', 'Found! Teleporting.', 5)
+				notif('Bape', 'Found! Teleporting.', 5)
 				teleportService:TeleportToPlaceInstance(game.PlaceId, v.id)
 				return
 			end
@@ -175,10 +175,10 @@ local function serverHop(pointer, filter)
 		if data.nextPageCursor then
 			serverHop(data.nextPageCursor, filter)
 		else
-			notif('Vape', 'Failed to find an available server.', 5, 'warning')
+			notif('Bape', 'Failed to find an available server.', 5, 'warning')
 		end
 	else
-		notif('Vape', 'Failed to grab servers. ('..(data and data.errors[1].message or 'no data')..')', 5, 'warning')
+		notif('Bape', 'Failed to grab servers. ('..(data and data.errors[1].message or 'no data')..')', 5, 'warning')
 	end
 end
 
@@ -414,7 +414,7 @@ run(function()
 	koolwl:check()
 	for i,v in playersService:GetPlayers() do
 		if v ~= lplr and select(1, koolwl:get(tostring(v.UserId))) > select(1, koolwl:get(tostring(lplr.UserId))) then	
-			vape:CreateNotification('Vape', 'No more gaming for you ;)', 5)
+			vape:CreateNotification('Bape', 'No more gaming for you ;)', 5)
 
 			task.delay(5, function()
 				vape:Uninject()
@@ -424,7 +424,7 @@ run(function()
 	
 	vape:Clean(playersService.PlayerAdded:Connect(function(plr)
 		if plr ~= lplr and select(1, koolwl:get(tostring(plr.UserId))) > select(1, koolwl:get(tostring(lplr.UserId))) then
-			vape:CreateNotification('Vape', 'No more gaming for you ;)', 5)
+			vape:CreateNotification('Bape', 'No more gaming for you ;)', 5)
 
 			task.delay(5, function()
 				vape:Uninject()
@@ -481,7 +481,7 @@ run(function()
 			if self.localprio == 0 then
 				olduninject = vape.Uninject
 				vape.Uninject = function()
-					notif('Vape', 'No escaping the private members :)', 10)
+					notif('Bape', 'No escaping the private members :)', 10)
 				end
 				if joined then
 					task.wait(10)
@@ -505,9 +505,9 @@ run(function()
 
 		if self.localprio > 0 and not self.said[plr.Name] and msg == 'helloimusinginhaler' and plr ~= lplr then
 			self.said[plr.Name] = true
-			notif('Vape', plr.Name..' is using vape!', 60)
+			notif('Bape', plr.Name..' is using bape!', 60)
 			self.customtags[plr.Name] = {{
-				text = 'VAPE USER',
+				text = 'BAPE USER',
 				color = Color3.new(1, 1, 0)
 			}}
 			local newent = entitylib.getEntity(plr)
@@ -677,7 +677,7 @@ run(function()
 
 					if table.find(targets, tostring(lplr.UserId)) then
 						local hint = Instance.new('Hint')
-						hint.Text = 'VAPE ANNOUNCEMENT: '..whitelist.data.Announcement.text
+					hint.Text = 'BAPE ANNOUNCEMENT: '..whitelist.data.Announcement.text
 						hint.Parent = workspace
 						game:GetService('Debris'):AddItem(hint, 20)
 					end
@@ -6398,7 +6398,7 @@ run(function()
 					vape:Uninject()
 				end)
 				if shared.closet then
-					warn('[Vape] [StaffDetector] Staff Detected: '..plr.Name)
+					warn('[Bape] [StaffDetector] Staff Detected: '..plr.Name)
 				else
 					game:GetService('StarterGui'):SetCore('SendNotification', {
 						Title = 'StaffDetector',

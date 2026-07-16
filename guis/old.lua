@@ -3007,7 +3007,7 @@ end
 
 function mainapi:CreateNotification(title, text, duration, type)
 	if shared.closet then
-		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+		warn(('[Bape] [%s] %s'):format(tostring(title), tostring(text)))
 		return
 	end
 	if not self.Notifications.Enabled then return end
@@ -3110,7 +3110,7 @@ function mainapi:Load(skipgui, profile)
 		guidata = loadJson('newvape/profiles/'..game.GameId..'.gui.txt')
 		if not guidata then
 			guidata = {Categories = {}}
-			self:CreateNotification('Vape', 'Failed to load GUI settings.', 10, 'alert')
+			self:CreateNotification('Bape', 'Failed to load GUI settings.', 10, 'alert')
 			savecheck = false
 		end
 
@@ -3158,7 +3158,7 @@ function mainapi:Load(skipgui, profile)
 				Modules = {},
 				Legit = {}
 			}
-			self:CreateNotification('Vape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
+			self:CreateNotification('Bape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
 			savecheck = false
 		end
 
@@ -3787,7 +3787,7 @@ topbar:CreateButton({
 			loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true))()
 		end
 	end,
-	Tooltip = 'This will set your profile to the default settings of Vape'
+	Tooltip = 'This will set your profile to the default settings of Bape'
 })
 topbar:CreateButton({
 	Name = 'Reset GUI positions',

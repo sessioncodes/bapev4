@@ -2208,7 +2208,7 @@ end
 local notifs = {}
 function mainapi:CreateNotification(title, text, duration, type, continued)
 	if shared.closet then
-		warn(('[Vape] [%s] %s'):format(tostring(title), tostring(text)))
+		warn(('[Bape] [%s] %s'):format(tostring(title), tostring(text)))
 		return
 	end
 	if #notifs > 0 and not continued then
@@ -2318,7 +2318,7 @@ function mainapi:Load(skipgui, profile)
 		guidata = loadJson('newvape/profiles/'..game.GameId..'.gui.txt')
 		if not guidata then
 			guidata = {Categories = {}}
-			self:CreateNotification('Vape', 'Failed to load GUI settings.', 10, 'alert')
+			self:CreateNotification('Bape', 'Failed to load GUI settings.', 10, 'alert')
 			savecheck = false
 		end
 
@@ -2352,7 +2352,7 @@ function mainapi:Load(skipgui, profile)
 				Modules = {},
 				Legit = {}
 			}
-			self:CreateNotification('Vape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
+			self:CreateNotification('Bape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
 			savecheck = false
 		end
 
