@@ -551,14 +551,8 @@ run(function()
 		self.hooked = true
 
 		if textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-			local oldIncoming = textChatService.OnIncomingMessage
 			textChatService.OnIncomingMessage = function(message)
-				local properties
-				if oldIncoming then
-					local success, result = pcall(oldIncoming, message)
-					if success then properties = result end
-				end
-				properties = properties or Instance.new('TextChatMessageProperties')
+				local properties = Instance.new('TextChatMessageProperties')
 
 				local source = message.TextSource
 				local plr = source and playersService:GetPlayerByUserId(source.UserId)
@@ -570,7 +564,7 @@ run(function()
 				return properties
 			end
 			vape:Clean(function()
-				textChatService.OnIncomingMessage = oldIncoming
+				textChatService.OnIncomingMessage = nil
 			end)
 		elseif replicatedStorage:FindFirstChild('DefaultChatSystemChatEvents') then
 			pcall(function()
