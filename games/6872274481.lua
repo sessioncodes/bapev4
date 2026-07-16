@@ -1,3 +1,4 @@
+-- session made this
 local commit = readfile('bapevape/profiles/commit.txt')
 local url = 'https://raw.githubusercontent.com/sessioncodes/bapev4/'..commit..'/games/bape.lua'
 local success, source = pcall(function()
