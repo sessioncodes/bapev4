@@ -7330,6 +7330,235 @@ run(function()
 end)
 	
 run(function()
+	local Shaders
+	local Preset
+	local Intensity
+	local Saturation
+	local Contrast
+	local Bloom
+	local SunRays
+	local WaterReflectance
+	local WaterTransparency
+	local DepthOfField
+	local createdObjects = {}
+	local oldLighting, oldTerrain = {}, {}
+	local lightingProps = {
+		'Technology',
+		'GlobalShadows',
+		'Brightness',
+		'ClockTime',
+		'ExposureCompensation',
+		'EnvironmentDiffuseScale',
+		'EnvironmentSpecularScale',
+		'ShadowSoftness'
+	}
+	local terrainProps = {
+		'WaterWaveSize',
+		'WaterWaveSpeed',
+		'WaterReflectance',
+		'WaterTransparency',
+		'Decoration'
+	}
+	local presets = {
+		Balanced = {
+			Brightness = 2.4,
+			ClockTime = 14,
+			ExposureCompensation = 0.15,
+			ShadowSoftness = 0.35,
+			EnvironmentDiffuseScale = 0.65,
+			EnvironmentSpecularScale = 1,
+			TintColor = Color3.fromRGB(245, 248, 255)
+		},
+		Cinematic = {
+			Brightness = 2,
+			ClockTime = 17.2,
+			ExposureCompensation = -0.05,
+			ShadowSoftness = 0.2,
+			EnvironmentDiffuseScale = 0.45,
+			EnvironmentSpecularScale = 1,
+			TintColor = Color3.fromRGB(255, 238, 220)
+		},
+		Bright = {
+			Brightness = 3,
+			ClockTime = 12.5,
+			ExposureCompensation = 0.25,
+			ShadowSoftness = 0.5,
+			EnvironmentDiffuseScale = 0.85,
+			EnvironmentSpecularScale = 1,
+			TintColor = Color3.fromRGB(255, 255, 255)
+		}
+	}
+
+	local function saveProperty(tab, obj, prop)
+		if tab[prop] == nil then
+			pcall(function()
+				tab[prop] = obj[prop]
+			end)
+		end
+	end
+
+	local function setProperty(obj, prop, value)
+		pcall(function()
+			obj[prop] = value
+		end)
+	end
+
+	local function makeObject(className, props)
+		local obj = Instance.new(className)
+		for prop, value in props do
+			setProperty(obj, prop, value)
+		end
+		obj.Parent = lightingService
+		table.insert(createdObjects, obj)
+		return obj
+	end
+
+	local function restore()
+		for _, obj in createdObjects do
+			obj:Destroy()
+		end
+		table.clear(createdObjects)
+		for prop, value in oldLighting do
+			setProperty(lightingService, prop, value)
+		end
+		for prop, value in oldTerrain do
+			setProperty(workspace.Terrain, prop, value)
+		end
+		table.clear(oldLighting)
+		table.clear(oldTerrain)
+	end
+
+	local function applyShaders()
+		if not Shaders or not Shaders.Enabled or not Preset or not Intensity or not Bloom or not SunRays or not WaterReflectance or not WaterTransparency then return end
+		restore()
+		local preset = presets[Preset.Value] or presets.Balanced
+		local intensity = Intensity.Value / 100
+		local bloom = Bloom.Value / 100
+		local rays = SunRays.Value / 100
+		for _, prop in lightingProps do
+			saveProperty(oldLighting, lightingService, prop)
+		end
+		for _, prop in terrainProps do
+			saveProperty(oldTerrain, workspace.Terrain, prop)
+		end
+		setProperty(lightingService, 'Technology', Enum.Technology.Future)
+		setProperty(lightingService, 'GlobalShadows', true)
+		setProperty(lightingService, 'Brightness', preset.Brightness + (intensity * 0.6))
+		setProperty(lightingService, 'ClockTime', preset.ClockTime)
+		setProperty(lightingService, 'ExposureCompensation', preset.ExposureCompensation + (intensity * 0.12))
+		setProperty(lightingService, 'EnvironmentDiffuseScale', preset.EnvironmentDiffuseScale)
+		setProperty(lightingService, 'EnvironmentSpecularScale', preset.EnvironmentSpecularScale)
+		setProperty(lightingService, 'ShadowSoftness', preset.ShadowSoftness)
+		setProperty(workspace.Terrain, 'Decoration', true)
+		setProperty(workspace.Terrain, 'WaterWaveSize', 0.18 + (intensity * 0.08))
+		setProperty(workspace.Terrain, 'WaterWaveSpeed', 10 + (intensity * 4))
+		setProperty(workspace.Terrain, 'WaterReflectance', WaterReflectance.Value / 100)
+		setProperty(workspace.Terrain, 'WaterTransparency', WaterTransparency.Value / 100)
+		makeObject('BloomEffect', {
+			Intensity = bloom * (1.2 + intensity),
+			Size = 32 + (bloom * 24),
+			Threshold = 1.65 - (bloom * 0.35)
+		})
+		makeObject('SunRaysEffect', {
+			Intensity = rays * 0.12,
+			Spread = 0.85
+		})
+		makeObject('ColorCorrectionEffect', {
+			TintColor = preset.TintColor,
+			Saturation = Saturation.Value / 100,
+			Contrast = Contrast.Value / 100,
+			Brightness = intensity * 0.03
+		})
+		makeObject('Atmosphere', {
+			Color = Color3.fromRGB(199, 214, 255),
+			Decay = Color3.fromRGB(92, 105, 130),
+			Density = 0.22 + (intensity * 0.08),
+			Offset = 0.1,
+			Glare = 0.1 + (intensity * 0.15),
+			Haze = 0.45 + (intensity * 0.35)
+		})
+		if DepthOfField.Enabled then
+			makeObject('DepthOfFieldEffect', {
+				FarIntensity = 0.18,
+				FocusDistance = 70,
+				InFocusRadius = 45,
+				NearIntensity = 0.08
+			})
+		end
+	end
+
+	Shaders = vape.Legit:CreateModule({
+		Name = 'Shaders',
+		Function = function(callback)
+			if callback then
+				applyShaders()
+			else
+				restore()
+			end
+		end,
+		Tooltip = 'Client-sided ultra graphics, water and RTX-style lighting'
+	})
+	Preset = Shaders:CreateDropdown({
+		Name = 'Preset',
+		List = {'Balanced', 'Cinematic', 'Bright'},
+		Function = applyShaders
+	})
+	Intensity = Shaders:CreateSlider({
+		Name = 'Intensity',
+		Min = 0,
+		Max = 100,
+		Default = 65,
+		Function = applyShaders
+	})
+	Saturation = Shaders:CreateSlider({
+		Name = 'Saturation',
+		Min = -100,
+		Max = 100,
+		Default = 15,
+		Function = applyShaders
+	})
+	Contrast = Shaders:CreateSlider({
+		Name = 'Contrast',
+		Min = -100,
+		Max = 100,
+		Default = 20,
+		Function = applyShaders
+	})
+	Bloom = Shaders:CreateSlider({
+		Name = 'Bloom',
+		Min = 0,
+		Max = 100,
+		Default = 35,
+		Function = applyShaders
+	})
+	SunRays = Shaders:CreateSlider({
+		Name = 'Sun Rays',
+		Min = 0,
+		Max = 100,
+		Default = 40,
+		Function = applyShaders
+	})
+	WaterReflectance = Shaders:CreateSlider({
+		Name = 'Water Reflectance',
+		Min = 0,
+		Max = 100,
+		Default = 65,
+		Function = applyShaders
+	})
+	WaterTransparency = Shaders:CreateSlider({
+		Name = 'Water Transparency',
+		Min = 0,
+		Max = 100,
+		Default = 25,
+		Function = applyShaders
+	})
+	DepthOfField = Shaders:CreateToggle({
+		Name = 'Depth Of Field',
+		Function = applyShaders
+	})
+end)
+
+run(function()
 	local Breadcrumbs
 	local Texture
 	local Lifetime
