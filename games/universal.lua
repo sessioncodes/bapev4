@@ -945,7 +945,7 @@ run(function()
 	local RightClick
 	local ShowTarget
 	local moveConst = Vector2.new(1, 0.77) * math.rad(0.5)
-	
+
 	local function wrapAngle(num)
 		num = num % math.pi
 		num -= num >= (math.pi / 2) and math.pi or 0
@@ -1108,7 +1108,7 @@ run(function()
 		Name = 'Show target info'
 	})
 end)
-	
+
 run(function()
 	local AutoClicker
 	local Mode
@@ -2245,6 +2245,31 @@ run(function()
 	})
 end)
 	
+run(function()
+	local DoubleJump
+	local lastJump = 0
+
+	DoubleJump = vape.Categories.Blatant:CreateModule({
+		Name = 'DoubleJump',
+		Function = function(callback)
+			if callback then
+				DoubleJump:Clean(inputService.InputBegan:Connect(function(input, processed)
+					if processed or input.KeyCode ~= Enum.KeyCode.Space or inputService:GetFocusedTextBox() then return end
+					if not entitylib.isAlive or tick() - lastJump < 0.12 then return end
+					local humanoid = entitylib.character.Humanoid
+					if humanoid.FloorMaterial ~= Enum.Material.Air then return end
+					lastJump = tick()
+					local root = entitylib.character.RootPart
+					local velocity = humanoid.UseJumpPower and humanoid.JumpPower or math.sqrt(2 * workspace.Gravity * humanoid.JumpHeight)
+					humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+					root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, velocity, root.AssemblyLinearVelocity.Z)
+				end))
+			end
+		end,
+		Tooltip = 'Lets you press Space repeatedly to jump again while airborne.'
+	})
+end)
+
 run(function()
 	local HitBoxes
 	local Targets
