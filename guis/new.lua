@@ -4609,8 +4609,7 @@ function mainapi:CreateCategoryList(categorysettings)
 					end
 				end)
 				object.MouseButton1Click:Connect(function()
-					mainapi:Save(v.Name)
-					mainapi:Load(true)
+					mainapi:SwitchProfile(v.Name)
 				end)
 				object.MouseEnter:Connect(function()
 					bind.Visible = true
@@ -5417,13 +5416,90 @@ function mainapi:CreateNotification(title, text, duration, type)
 	end)
 end
 
+function mainapi:CaptureProfileDefaults()
+	if self.ProfileDefaults then return end
+	local defaults = {Categories = {}, Modules = {}, Legit = {}}
+	for i, v in self.Categories do
+		if v.Type ~= 'Category' and i ~= 'Main' then
+			defaults.Categories[i] = {
+				Enabled = v.Button and v.Button.Enabled or false,
+				Expanded = v.Expanded,
+				Pinned = v.Pinned,
+				Position = {X = v.Object.Position.X.Offset, Y = v.Object.Position.Y.Offset},
+				Options = self:SaveOptions(v, v.Options) or {},
+				List = table.clone(v.List or {}),
+				ListEnabled = table.clone(v.ListEnabled or {})
+			}
+		end
+	end
+	for i, v in self.Modules do
+		defaults.Modules[i] = {
+			Enabled = v.Enabled,
+			Bind = table.clone(v.Bind or {}),
+			Options = self:SaveOptions(v, true) or {}
+		}
+	end
+	for i, v in self.Legit.Modules do
+		defaults.Legit[i] = {
+			Enabled = v.Enabled,
+			Position = v.Children and {X = v.Children.Position.X.Offset, Y = v.Children.Position.Y.Offset} or nil,
+			Options = self:SaveOptions(v, v.Options) or {}
+		}
+	end
+	self.ProfileDefaults = defaults
+end
+
+function mainapi:ResetProfileState()
+	self:CaptureProfileDefaults()
+	for i, object in self.Modules do
+		local defaults = self.ProfileDefaults.Modules[i]
+		if object.Enabled ~= (defaults and defaults.Enabled or false) then object:Toggle(true) end
+		if defaults then
+			self:LoadOptions(object, defaults.Options)
+			object:SetBind(table.clone(defaults.Bind))
+			object.Object.Bind.Visible = #defaults.Bind > 0
+		end
+	end
+	for i, object in self.Legit.Modules do
+		local defaults = self.ProfileDefaults.Legit[i]
+		if object.Enabled ~= (defaults and defaults.Enabled or false) then object:Toggle() end
+		if defaults then
+			self:LoadOptions(object, defaults.Options)
+			if defaults.Position and object.Children then
+				object.Children.Position = UDim2.fromOffset(defaults.Position.X, defaults.Position.Y)
+			end
+		end
+	end
+	for i, object in self.Categories do
+		local defaults = self.ProfileDefaults.Categories[i]
+		if defaults then
+			self:LoadOptions(object, defaults.Options)
+			if object.Button and object.Button.Enabled ~= defaults.Enabled then object.Button:Toggle() end
+			if object.Pinned ~= defaults.Pinned then object:Pin() end
+			if defaults.Expanded ~= nil and object.Expanded ~= defaults.Expanded and object.Expand then object:Expand() end
+			object.List = table.clone(defaults.List)
+			object.ListEnabled = table.clone(defaults.ListEnabled)
+			if object.ChangeValue then object:ChangeValue() end
+			object.Object.Position = UDim2.fromOffset(defaults.Position.X, defaults.Position.Y)
+		end
+	end
+end
+
+function mainapi:SwitchProfile(profile)
+	if not profile or profile == self.Profile then return end
+	self:Save()
+	self:Load(true, profile)
+end
+
 function mainapi:Load(skipgui, profile)
 	self.Loaded = false
+	self:ResetProfileState()
 	if not skipgui then
 		self.GUIColor:SetValue(nil, nil, nil, 4)
 	end
 	local guidata = {}
 	local savecheck = true
+	local createProfile = false
 
 	if isfile('bapevape/profiles/'..game.GameId..'.gui.txt') then
 		guidata = loadJson('bapevape/profiles/'..game.GameId..'.gui.txt')
@@ -5479,6 +5555,9 @@ function mainapi:Load(skipgui, profile)
 			self:CreateNotification('Bape', 'Failed to load '..self.Profile..' profile.', 10, 'alert')
 			savecheck = false
 		end
+		savedata.Categories = type(savedata.Categories) == 'table' and savedata.Categories or {}
+		savedata.Modules = type(savedata.Modules) == 'table' and savedata.Modules or {}
+		savedata.Legit = type(savedata.Legit) == 'table' and savedata.Legit or {}
 		self.ProfileData = savedata
 		if shared.closet and savedata.Modules and savedata.Modules.Killaura then
 			warn('[Bape] Loaded preserved Killaura settings from '..self.Profile..self.Place..'.txt')
@@ -5504,12 +5583,15 @@ function mainapi:Load(skipgui, profile)
 				object.ListEnabled = v.ListEnabled or {}
 				object:ChangeValue()
 			end
-			object.Object.Position = UDim2.fromOffset(v.Position.X, v.Position.Y)
+			if v.Position then
+				object.Object.Position = UDim2.fromOffset(v.Position.X, v.Position.Y)
+			end
 		end
 
 		for i, v in savedata.Modules do
 			local object = self.Modules[i]
 			if not object then continue end
+			local bind = type(v.Bind) == 'table' and v.Bind or {}
 			if object.Options and v.Options then
 				self:LoadOptions(object, v.Options)
 			end
@@ -5519,8 +5601,8 @@ function mainapi:Load(skipgui, profile)
 				end
 				object:Toggle(true)
 			end
-			object:SetBind(v.Bind)
-			object.Object.Bind.Visible = #v.Bind > 0
+			object:SetBind(bind)
+			object.Object.Bind.Visible = #bind > 0
 		end
 
 		for i, v in savedata.Legit do
@@ -5540,7 +5622,7 @@ function mainapi:Load(skipgui, profile)
 		self:UpdateTextGUI(true)
 	else
 		self.ProfileData = {Categories = {}, Modules = {}, Legit = {}}
-		self:Save()
+		createProfile = true
 	end
 
 	if self.Downloader then
@@ -5550,6 +5632,7 @@ function mainapi:Load(skipgui, profile)
 	-- A malformed profile should not leave the visible GUI in a permanently unsavable state.
 	self.Loaded = true
 	self.Categories.Main.Options.Bind:SetBind(self.Keybind)
+	if createProfile then self:Save() end
 
 	if inputService.TouchEnabled and #self.Keybind == 1 and self.Keybind[1] == 'RightShift' then
 		local button = Instance.new('TextButton')
@@ -7414,8 +7497,7 @@ mainapi:Clean(inputService.InputBegan:Connect(function(inputObj)
 
 		for _, v in mainapi.Profiles do
 			if checkKeybinds(mainapi.HeldKeybinds, v.Bind, inputObj.KeyCode.Name) and v.Name ~= mainapi.Profile then
-				mainapi:Save(v.Name)
-				mainapi:Load(true)
+				mainapi:SwitchProfile(v.Name)
 				break
 			end
 		end
