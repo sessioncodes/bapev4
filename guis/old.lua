@@ -3389,7 +3389,9 @@ gui.Name = randomString()
 gui.DisplayOrder = 9999999
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.IgnoreGuiInset = true
-gui.OnTopOfCoreBlur = true
+pcall(function()
+	gui.OnTopOfCoreBlur = true
+end)
 if mainapi.ThreadFix then
 	gui.Parent = (gethui and gethui()) or cloneref(game:GetService('CoreGui'))
 else
