@@ -7438,7 +7438,13 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 				if bindIcon then bindIcon.ImageColor3 = button.Object.TextColor3 end
 				if bindText then bindText.TextColor3 = button.Object.TextColor3 end
 			end
-			button.Object.Dots.Dots.ImageColor3 = button.Object.TextColor3
+			local dots = button.Object:FindFirstChild('Dots')
+			if dots then
+				local dotsChild = dots:FindFirstChild('Dots')
+				if dotsChild then
+					dotsChild.ImageColor3 = button.Object.TextColor3
+				end
+			end
 		end
 
 		for _, option in button.Options do
