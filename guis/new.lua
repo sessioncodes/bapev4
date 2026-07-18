@@ -7405,8 +7405,13 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 				v.Selected.BackgroundColor3 = rainbow and Color3.fromHSV(mainapi:Color(hue % 1)) or Color3.fromHSV(hue, sat, val)
 				v.Selected.Title.TextColor3 = mainapi.GUIColor.Rainbow and Color3.new(0.19, 0.19, 0.19) or mainapi:TextColor(hue, sat, val)
 				v.Selected.Dots.Dots.ImageColor3 = v.Selected.Title.TextColor3
-				v.Selected.Bind.Icon.ImageColor3 = v.Selected.Title.TextColor3
-				v.Selected.Bind.TextLabel.TextColor3 = v.Selected.Title.TextColor3
+				local selectedBind = v.Selected:FindFirstChild('Bind')
+				if selectedBind then
+					local selectedBindIcon = selectedBind:FindFirstChild('Icon')
+					local selectedBindText = selectedBind:FindFirstChild('TextLabel')
+					if selectedBindIcon then selectedBindIcon.ImageColor3 = v.Selected.Title.TextColor3 end
+					if selectedBindText then selectedBindText.TextColor3 = v.Selected.Title.TextColor3 end
+				end
 			end
 		end
 	end
@@ -7415,16 +7420,24 @@ function mainapi:UpdateGUI(hue, sat, val, default)
 		if button.Enabled then
 			button.Object.BackgroundColor3 = rainbow and Color3.fromHSV(mainapi:Color((hue - (button.Index * 0.025)) % 1)) or Color3.fromHSV(hue, sat, val)
 			button.Object.TextColor3 = mainapi.GUIColor.Rainbow and Color3.new(0.19, 0.19, 0.19) or mainapi:TextColor(hue, sat, val)
-			button.Object.UIGradient.Enabled = rainbow and mainapi.RainbowMode.Value == 'Gradient'
-			if button.Object.UIGradient.Enabled then
+			local gradient = button.Object:FindFirstChild('UIGradient')
+			if gradient then
+				gradient.Enabled = rainbow and mainapi.RainbowMode.Value == 'Gradient'
+			end
+			if gradient and gradient.Enabled then
 				button.Object.BackgroundColor3 = Color3.new(1, 1, 1)
-				button.Object.UIGradient.Color = ColorSequence.new({
+				gradient.Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0, Color3.fromHSV(mainapi:Color((hue - (button.Index * 0.025)) % 1))),
 					ColorSequenceKeypoint.new(1, Color3.fromHSV(mainapi:Color((hue - ((button.Index + 1) * 0.025)) % 1)))
 				})
 			end
-			button.Object.Bind.Icon.ImageColor3 = button.Object.TextColor3
-			button.Object.Bind.TextLabel.TextColor3 = button.Object.TextColor3
+			local bind = button.Object:FindFirstChild('Bind')
+			if bind then
+				local bindIcon = bind:FindFirstChild('Icon')
+				local bindText = bind:FindFirstChild('TextLabel')
+				if bindIcon then bindIcon.ImageColor3 = button.Object.TextColor3 end
+				if bindText then bindText.TextColor3 = button.Object.TextColor3 end
+			end
 			button.Object.Dots.Dots.ImageColor3 = button.Object.TextColor3
 		end
 
