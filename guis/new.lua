@@ -5605,8 +5605,10 @@ function mainapi:Load(skipgui, profile)
 				end
 				object:Toggle(true)
 			end
-			object:SetBind(bind)
-			object.Object.Bind.Visible = #bind > 0
+			if object.SetBind and object.Object and object.Object:FindFirstChild('Bind') then
+				object:SetBind(bind)
+				object.Object.Bind.Visible = #bind > 0
+			end
 		end
 
 		for i, v in savedata.Legit do
