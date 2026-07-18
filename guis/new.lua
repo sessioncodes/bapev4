@@ -2336,7 +2336,9 @@ components = {
 		function optionapi:Color(hue, sat, val, rainbowcheck)
 			fill.BackgroundColor3 = rainbowcheck and Color3.fromHSV(mainapi:Color((hue - (self.Index * 0.075)) % 1)) or Color3.fromHSV(hue, sat, val)
 			knob.ImageColor3 = fill.BackgroundColor3
-			knobholdermax.Knob.ImageColor3 = fill.BackgroundColor3
+			if knobholdermax:FindFirstChild('Knob') then
+				knobholdermax.Knob.ImageColor3 = fill.BackgroundColor3
+			end
 		end
 		
 		function optionapi:GetRandomValue()
@@ -5456,8 +5458,10 @@ function mainapi:ResetProfileState()
 		if object.Enabled ~= (defaults and defaults.Enabled or false) then object:Toggle(true) end
 		if defaults then
 			self:LoadOptions(object, defaults.Options)
-			object:SetBind(table.clone(defaults.Bind))
-			object.Object.Bind.Visible = #defaults.Bind > 0
+			if object.SetBind and object.Object and object.Object:FindFirstChild('Bind') then
+				object:SetBind(table.clone(defaults.Bind))
+				object.Object.Bind.Visible = #defaults.Bind > 0
+			end
 		end
 	end
 	for i, object in self.Legit.Modules do
