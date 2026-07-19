@@ -1,4 +1,4 @@
-shared.closet = true
+shared.closet = shared.closet or false
 shared.badexecs = nil
 
 local isfile = isfile or function(file)
