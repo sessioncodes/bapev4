@@ -24,7 +24,7 @@ local function checkLicense()
 
 	local mid = game:GetService('RbxAnalyticsService'):GetClientId()
 	local ok, raw = pcall(function()
-		return game:HttpGet('https://bape-kohl.vercel.app/api/check?l='..lic..'&m='..mid, false)
+		return game:HttpGet('https://bape.lol/api/check?l='..lic..'&m='..mid, false)
 	end)
 
 	if not ok then
