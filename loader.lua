@@ -42,8 +42,9 @@ end
 
 local function downloadFile(path, func)
 	if not isfile(path) then
+		local commitHash = (isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or 'main')
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), false)
+			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..commitHash..'/'..select(1, path:gsub('bapevape/', '')), false)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
