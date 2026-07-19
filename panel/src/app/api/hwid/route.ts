@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { resetHwid, resetHwidByDiscord } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
   const { key, discord_id } = await req.json()
@@ -8,16 +8,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Missing key or discord_id' }, { status: 400 })
   }
 
-  const query = supabase.from('users').update({ hwid: null })
-  if (key) {
-    query.eq('key', key)
-  } else {
-    query.eq('discord_id', discord_id)
-  }
-
-  const { error } = await query
-
-  if (error) {
+  try {
+    if (key) {
+      await resetHwid(key)
+    } else {
+      await resetHwidByDiscord(discord_id)
+    }
+  } catch {
     return NextResponse.json({ success: false, error: 'Failed to reset HWID' }, { status: 500 })
   }
 

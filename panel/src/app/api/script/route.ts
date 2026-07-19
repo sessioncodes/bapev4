@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getUser } from '@/lib/db'
 
 export async function GET(req: NextRequest) {
   const key = req.nextUrl.searchParams.get('key')
@@ -8,11 +8,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse('-- Invalid request', { status: 400 })
   }
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('*')
-    .eq('key', key)
-    .single()
+  const user = await getUser(key)
 
   if (!user || user.revoked) {
     return new NextResponse('-- Invalid or revoked key', { status: 403 })

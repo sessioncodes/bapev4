@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { getUser, getUserByDiscord } from '@/lib/db'
 
 export async function POST(req: NextRequest) {
-  const { key } = await req.json()
+  const { key, discord_id } = await req.json()
 
-  if (!key) {
-    return NextResponse.json({ success: false, error: 'Missing key' }, { status: 400 })
+  if (!key && !discord_id) {
+    return NextResponse.json({ success: false, error: 'Missing key or discord_id' }, { status: 400 })
   }
 
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('key, discord_id, hwid, granted_at, revoked')
-    .eq('key', key)
-    .single()
+  const user = key ? await getUser(key) : await getUserByDiscord(discord_id)
 
-  if (error || !user) {
+  if (!user) {
     return NextResponse.json({ success: false, error: 'Invalid key' }, { status: 401 })
   }
 
   return NextResponse.json({
     success: true,
     user: {
+      key: user.key,
       discord_id: user.discord_id,
       hwid: user.hwid ? user.hwid.slice(0, 8) + '...' : 'Not set',
       granted_at: user.granted_at,

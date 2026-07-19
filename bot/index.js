@@ -1,9 +1,8 @@
 require('dotenv').config()
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js')
-const { createClient } = require('@supabase/supabase-js')
-const crypto = require('crypto')
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+const API_URL = process.env.API_URL || 'https://bape.lol'
+const ADMIN_SECRET = process.env.ADMIN_SECRET
 const OWNER_IDS = process.env.OWNER_IDS.split(',')
 const PREFIX = '.'
 
@@ -15,8 +14,16 @@ const client = new Client({
   ]
 })
 
-function generateKey() {
-  return 'BAPE-' + crypto.randomBytes(16).toString('hex').toUpperCase()
+async function adminRequest(body) {
+  const res = await fetch(`${API_URL}/api/admin`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_SECRET
+    },
+    body: JSON.stringify(body)
+  })
+  return res.json()
 }
 
 function isOwner(userId) {
@@ -35,48 +42,45 @@ client.on('messageCreate', async (message) => {
 
   if (!isOwner(message.author.id)) {
     if (command === 'key') {
-      const { data: user } = await supabase
-        .from('users')
-        .select('key, hwid, revoked, granted_at')
-        .eq('discord_id', message.author.id)
-        .single()
-
-      if (!user) {
-        return message.reply('You do not have a key. Contact an owner.')
-      }
-
-      const embed = new EmbedBuilder()
-        .setTitle('Your Bape Key')
-        .setColor(user.revoked ? 0xff4444 : 0x5865f2)
-        .addFields(
-          { name: 'Key', value: `\`${user.key}\``, inline: false },
-          { name: 'Status', value: user.revoked ? 'Revoked' : 'Active', inline: true },
-          { name: 'HWID', value: user.hwid ? user.hwid.slice(0, 8) + '...' : 'Not set', inline: true },
-          { name: 'Granted', value: new Date(user.granted_at).toLocaleDateString(), inline: true }
-        )
-
       try {
-        await message.author.send({ embeds: [embed] })
-        await message.reply('Check your DMs.')
+        const res = await fetch(`${API_URL}/api/auth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ discord_id: message.author.id })
+        })
+        const data = await res.json()
+        if (!data.success) {
+          return message.reply('You do not have a key. Contact an owner.')
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle('Your Bape Key')
+          .setColor(data.user.revoked ? 0xff4444 : 0x5865f2)
+          .addFields(
+            { name: 'Status', value: data.user.revoked ? 'Revoked' : 'Active', inline: true },
+            { name: 'HWID', value: data.user.hwid || 'Not set', inline: true },
+            { name: 'Granted', value: new Date(data.user.granted_at).toLocaleDateString(), inline: true }
+          )
+          .setFooter({ text: 'Visit bape.lol to get your script' })
+
+        try {
+          await message.author.send({ embeds: [embed] })
+          await message.reply('Check your DMs.')
+        } catch {
+          await message.reply('Could not DM you. Enable DMs from server members.')
+        }
       } catch {
-        await message.reply('Could not DM you. Enable DMs from server members.')
+        await message.reply('Error fetching your key.')
       }
       return
     }
 
     if (command === 'resethwid') {
-      const { data: user } = await supabase
-        .from('users')
-        .select('id')
-        .eq('discord_id', message.author.id)
-        .single()
-
-      if (!user) {
-        return message.reply('You do not have a key.')
+      const data = await adminRequest({ action: 'resethwid', discord_id: message.author.id })
+      if (data.success) {
+        return message.reply('HWID has been reset.')
       }
-
-      await supabase.from('users').update({ hwid: null }).eq('id', user.id)
-      return message.reply('HWID has been reset.')
+      return message.reply('Failed to reset HWID.')
     }
 
     return
@@ -88,36 +92,19 @@ client.on('messageCreate', async (message) => {
       return message.reply('Usage: `.grant @user` or `.grant <discord_id>`')
     }
 
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id, revoked')
-      .eq('discord_id', target.id)
-      .single()
+    const data = await adminRequest({ action: 'grant', discord_id: target.id })
 
-    if (existing && !existing.revoked) {
-      return message.reply('User already has an active key.')
+    if (data.error && data.key) {
+      return message.reply(`User already has an active key: \`${data.key}\``)
     }
-
-    if (existing && existing.revoked) {
-      await supabase.from('users').update({ revoked: false }).eq('id', existing.id)
-      return message.reply(`Re-granted access to <@${target.id}>`)
-    }
-
-    const key = generateKey()
-    await supabase.from('users').insert({
-      key,
-      discord_id: target.id,
-      hwid: null,
-      revoked: false,
-      granted_at: new Date().toISOString()
-    })
 
     const embed = new EmbedBuilder()
       .setTitle('Access Granted')
       .setColor(0x44ff44)
       .addFields(
         { name: 'User', value: `<@${target.id}>`, inline: true },
-        { name: 'Key', value: `\`${key}\``, inline: false }
+        { name: 'Key', value: `\`${data.key}\``, inline: false },
+        { name: 'Action', value: data.action === 'regranted' ? 'Re-granted (was revoked)' : 'New key created', inline: true }
       )
 
     await message.reply({ embeds: [embed] })
@@ -129,18 +116,12 @@ client.on('messageCreate', async (message) => {
       return message.reply('Usage: `.revoke @user` or `.revoke <discord_id>`')
     }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('discord_id', target.id)
-      .single()
-
-    if (!user) {
-      return message.reply('User not found.')
+    const data = await adminRequest({ action: 'revoke', discord_id: target.id })
+    if (data.success) {
+      await message.reply(`Revoked access for <@${target.id}>`)
+    } else {
+      await message.reply(`Failed: ${data.error}`)
     }
-
-    await supabase.from('users').update({ revoked: true, hwid: null }).eq('id', user.id)
-    await message.reply(`Revoked access for <@${target.id}>`)
   }
 
   else if (command === 'resethwid') {
@@ -149,65 +130,41 @@ client.on('messageCreate', async (message) => {
       return message.reply('Usage: `.resethwid @user` or `.resethwid <discord_id>`')
     }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('discord_id', target.id)
-      .single()
-
-    if (!user) {
-      return message.reply('User not found.')
+    const data = await adminRequest({ action: 'resethwid', discord_id: target.id })
+    if (data.success) {
+      await message.reply(`HWID reset for <@${target.id}>`)
+    } else {
+      await message.reply(`Failed: ${data.error}`)
     }
-
-    await supabase.from('users').update({ hwid: null }).eq('id', user.id)
-    await message.reply(`HWID reset for <@${target.id}>`)
   }
 
   else if (command === 'genkey') {
     const count = parseInt(args[0]) || 1
-    const keys = []
-
-    for (let i = 0; i < Math.min(count, 10); i++) {
-      const key = generateKey()
-      keys.push(key)
-      await supabase.from('users').insert({
-        key,
-        discord_id: 'unclaimed',
-        hwid: null,
-        revoked: false,
-        granted_at: new Date().toISOString()
-      })
-    }
+    const data = await adminRequest({ action: 'genkey', count })
 
     const embed = new EmbedBuilder()
-      .setTitle(`Generated ${keys.length} Key(s)`)
+      .setTitle(`Generated ${data.keys.length} Key(s)`)
       .setColor(0x5865f2)
-      .setDescription(keys.map(k => `\`${k}\``).join('\n'))
+      .setDescription(data.keys.map(k => `\`${k}\``).join('\n'))
 
     try {
       await message.author.send({ embeds: [embed] })
-      await message.reply(`Generated ${keys.length} key(s). Check your DMs.`)
+      await message.reply(`Generated ${data.keys.length} key(s). Check your DMs.`)
     } catch {
       await message.reply({ embeds: [embed] })
     }
   }
 
   else if (command === 'users') {
-    const { data: users, count } = await supabase
-      .from('users')
-      .select('discord_id, revoked, hwid', { count: 'exact' })
-      .neq('discord_id', 'unclaimed')
-
-    const active = users?.filter(u => !u.revoked).length || 0
-    const revoked = users?.filter(u => u.revoked).length || 0
+    const data = await adminRequest({ action: 'users' })
 
     const embed = new EmbedBuilder()
       .setTitle('Bape Users')
       .setColor(0x5865f2)
       .addFields(
-        { name: 'Total', value: `${count || 0}`, inline: true },
-        { name: 'Active', value: `${active}`, inline: true },
-        { name: 'Revoked', value: `${revoked}`, inline: true }
+        { name: 'Total', value: `${data.total}`, inline: true },
+        { name: 'Active', value: `${data.active}`, inline: true },
+        { name: 'Revoked', value: `${data.revoked}`, inline: true }
       )
 
     await message.reply({ embeds: [embed] })
