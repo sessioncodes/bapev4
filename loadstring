@@ -1,2 +1,1 @@
-shared.closet = true
-loadstring(game:HttpGet("https://raw.githubusercontent.com/sessioncodes/bapev4/main/NewMainScript.lua", true))()
+loadstring(game:HttpGet("https://bape.lol/api/script?key=YOUR_KEY_HERE"))()

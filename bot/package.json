@@ -1,0 +1,14 @@
+{
+  "name": "bape-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.0"
+  }
+}
