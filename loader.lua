@@ -11,40 +11,6 @@ local delfile = delfile or function(file)
 	writefile(file, '')
 end
 
-local httpService = game:GetService('HttpService')
-
-local function validateKey()
-	local key = shared.bapeKey
-	if not key then
-		if isfile('bapevape/profiles/key.txt') then
-			key = readfile('bapevape/profiles/key.txt')
-		end
-	end
-
-	if not key or key == '' then
-		error('[Bape] No key provided. Get your key at https://bape.lol')
-	end
-
-	local hwid = game:GetService('RbxAnalyticsService'):GetClientId()
-	local suc, res = pcall(function()
-		return game:HttpGet('https://bape.lol/api/validate?key='..key..'&hwid='..hwid, false)
-	end)
-
-	if not suc then
-		if isfile('bapevape/profiles/key.txt') then
-			return
-		end
-		error('[Bape] Failed to validate key: '..tostring(res))
-	end
-
-	local data = httpService:JSONDecode(res)
-	if not data.success then
-		error('[Bape] '..tostring(data.error or 'Invalid key'))
-	end
-
-	writefile('bapevape/profiles/key.txt', key)
-end
-
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
@@ -77,8 +43,6 @@ for _, folder in {'bapevape', 'bapevape/games', 'bapevape/profiles', 'bapevape/a
 	end
 end
 
-validateKey()
-
 if not shared.VapeDeveloper then
 	local cachedCommit = isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or ''
 	local success, response = pcall(function()
@@ -87,10 +51,12 @@ if not shared.VapeDeveloper then
 	local commit
 	if success then
 		local decoded = pcall(function()
-			commit = httpService:JSONDecode(response).sha
+			commit = game:GetService('HttpService'):JSONDecode(response).sha
 		end)
 		if not decoded or type(commit) ~= 'string' or #commit ~= 40 then commit = nil end
 	end
+	-- If the API is blocked or rate-limited, use raw main and invalidate only cached code.
+	-- Profiles and downloaded assets are deliberately left untouched.
 	commit = commit or 'main'
 	if commit == 'main' or cachedCommit ~= commit then
 		wipeFolder('bapevape')
