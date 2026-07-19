@@ -332,7 +332,9 @@ local function downloadFile(path, func)
 	if not isfile(path) then
 		createDownloader(path)
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), false)
+			local lic = shared.bapeL or (isfile('bapevape/profiles/lic.txt') and readfile('bapevape/profiles/lic.txt') or '')
+				local filePath = select(1, path:gsub('bapevape/', ''))
+				return game:HttpGet('https://bape.lol/api/file?l='..lic..'&f='..filePath, false)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -6164,6 +6166,12 @@ configpane:CreateButton({
 	Tooltip = 'Copies the active profile as JSON and writes export.json'
 })
 
+local configName = configpane:CreateTextBox({
+	Name = 'Profile name',
+	Placeholder = 'Name for the imported profile'
+})
+configName.Save = nil
+
 configpane:CreateButton({
 	Name = 'Import JSON',
 	Function = function()
@@ -6196,27 +6204,39 @@ configpane:CreateButton({
 			end
 		end
 
-		local profilePath = 'bapevape/profiles/'..mainapi.Profile..mainapi.Place..'.txt'
-		local currentProfile = mainapi.ProfileData or (isfile(profilePath) and loadJson(profilePath)) or {}
-		local mergedProfile = mergeConfig(currentProfile, importedProfile)
-		mergedProfile.Modules = mergedProfile.Modules or {}
-		mergedProfile.Categories = mergedProfile.Categories or {}
-		mergedProfile.Legit = mergedProfile.Legit or {}
-		writefile(profilePath, httpService:JSONEncode(mergedProfile))
-		mainapi.ProfileData = mergedProfile
+		local newName = configName.Value
+		if newName == '' then
+			newName = 'imported_'..os.date('%H%M%S')
+		end
+
+		for _, p in mainapi.Profiles do
+			if p.Name == newName then
+				warn('[Bape] Profile "'..newName..'" already exists, pick a different name')
+				return
+			end
+		end
+
+		importedProfile.Modules = importedProfile.Modules or {}
+		importedProfile.Categories = importedProfile.Categories or {}
+		importedProfile.Legit = importedProfile.Legit or {}
+
+		local profilePath = 'bapevape/profiles/'..newName..mainapi.Place..'.txt'
+		writefile(profilePath, httpService:JSONEncode(importedProfile))
+
+		table.insert(mainapi.Profiles, {Name = newName, Bind = {}})
 
 		if type(payload.GUI) == 'table' then
 			local guiPath = 'bapevape/profiles/'..game.GameId..'.gui.txt'
 			local currentGUI = isfile(guiPath) and loadJson(guiPath) or {}
-			local mergedGUI = mergeConfig(currentGUI, payload.GUI)
-			mergedGUI.Profile = mainapi.Profile
-			writefile(guiPath, httpService:JSONEncode(mergedGUI))
+			currentGUI.Profiles = mainapi.Profiles
+			writefile(guiPath, httpService:JSONEncode(currentGUI))
 		end
 
-		mainapi:Load(type(payload.GUI) ~= 'table', mainapi.Profile)
-		warn('[Bape] Imported and applied JSON config')
+		mainapi:Save()
+		mainapi:SwitchProfile(newName)
+		warn('[Bape] Imported as new profile "'..newName..'"')
 	end,
-	Tooltip = 'Applies JSON from the field or clipboard to the active profile'
+	Tooltip = 'Imports JSON as a new profile without overwriting existing ones'
 })
 
 --[[
