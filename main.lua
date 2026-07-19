@@ -26,11 +26,14 @@ local playersService = cloneref(game:GetService('Players'))
 
 local function downloadFile(path, func)
 	if not isfile(path) then
+		local lic = shared.bapeL or (isfile('bapevape/profiles/lic.txt') and readfile('bapevape/profiles/lic.txt') or '')
+		local filePath = select(1, path:gsub('bapevape/', ''))
+		local mid = pcall(function() return game:GetService('RbxAnalyticsService'):GetClientId() end) and game:GetService('RbxAnalyticsService'):GetClientId() or ''
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/'..select(1, path:gsub('bapevape/', '')), false)
+			return game:HttpGet('https://bape.lol/api/file?l='..lic..'&f='..filePath..'&m='..mid, false)
 		end)
-		if not suc or res == '404: Not Found' then
-			error(res)
+		if not suc or res == '' then
+			error('[Bape] Failed to download: '..filePath)
 		end
 		if path:find('.lua') then
 			res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res
@@ -48,13 +51,11 @@ local function finishLoading()
 	vape:Clean(playersService.LocalPlayer.OnTeleport:Connect(function()
 		if (not teleportedServers) and (not shared.VapeIndependent) then
 			teleportedServers = true
+			local lic = shared.bapeL or ''
 			local teleportScript = [[
 				shared.vapereload = true
-				if shared.VapeDeveloper then
-					loadstring(readfile('bapevape/loader.lua'), 'loader')()
-				else
-					loadstring(game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/loader.lua', false), 'loader')()
-				end
+				shared.bapeL = "]]..lic..[["
+				loadstring(game:HttpGet('https://bape.lol/api/file?l=]]..lic..[[&f=loader.lua', false), 'loader')()
 			]]
 			if shared.VapeDeveloper then
 				teleportScript = 'shared.VapeDeveloper = true\n'..teleportScript
@@ -103,7 +104,6 @@ if not shared.VapeIndependent then
 	end
 	local isBedwars = game.GameId == 2619619496 or game.PlaceId == 6872265039 or game.PlaceId == 6872274481
 	local gameModuleId = game.GameId == 2619619496 and 6872274481 or game.PlaceId
-	-- Lobby and match modules share one profile without forcing the match module to run in the lobby.
 	vape.Place = isBedwars and 6872274481 or gameModuleId
 	local function loadGameModule(source)
 		local module, loadError = loadstring(source, tostring(gameModuleId))
@@ -124,10 +124,12 @@ if not shared.VapeIndependent then
 			loadGameModule(readfile('bapevape/games/'..gameModuleId..'.lua'))
 		else
 			if not shared.VapeDeveloper then
+				local lic = shared.bapeL or (isfile('bapevape/profiles/lic.txt') and readfile('bapevape/profiles/lic.txt') or '')
+				local mid = pcall(function() return game:GetService('RbxAnalyticsService'):GetClientId() end) and game:GetService('RbxAnalyticsService'):GetClientId() or ''
 				local suc, res = pcall(function()
-					return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..readfile('bapevape/profiles/commit.txt')..'/games/'..gameModuleId..'.lua', false)
+					return game:HttpGet('https://bape.lol/api/file?l='..lic..'&f=games/'..gameModuleId..'.lua&m='..mid, false)
 				end)
-				if suc and res ~= '404: Not Found' then
+				if suc and res ~= '' then
 					loadGameModule(downloadFile('bapevape/games/'..gameModuleId..'.lua'))
 				end
 			end

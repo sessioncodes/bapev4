@@ -38,16 +38,19 @@ local function checkLicense()
 	end
 
 	writefile('bapevape/profiles/lic.txt', lic)
+	shared.bapeL = lic
 end
 
 local function downloadFile(path, func)
 	if not isfile(path) then
-		local commitHash = (isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or 'main')
+		local lic = shared.bapeL or (isfile('bapevape/profiles/lic.txt') and readfile('bapevape/profiles/lic.txt') or '')
+		local filePath = select(1, path:gsub('bapevape/', ''))
+		local mid = pcall(function() return game:GetService('RbxAnalyticsService'):GetClientId() end) and game:GetService('RbxAnalyticsService'):GetClientId() or ''
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sessioncodes/bapev4/'..commitHash..'/'..select(1, path:gsub('bapevape/', '')), false)
+			return game:HttpGet('https://bape.lol/api/file?l='..lic..'&f='..filePath..'&m='..mid, false)
 		end)
-		if not suc or res == '404: Not Found' then
-			error(res)
+		if not suc or res == '' then
+			error('[Bape] Failed to download: '..filePath)
 		end
 		if path:find('.lua') then
 			res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n'..res
@@ -76,25 +79,10 @@ end
 checkLicense()
 
 if not shared.VapeDeveloper then
-	local cachedCommit = isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or ''
-	local success, response = pcall(function()
-		return game:HttpGet('https://api.github.com/repos/sessioncodes/bapev4/commits/main', false)
-	end)
-	local commit
-	if success then
-		local decoded = pcall(function()
-			commit = httpService:JSONDecode(response).sha
-		end)
-		if not decoded or type(commit) ~= 'string' or #commit ~= 40 then commit = nil end
-	end
-	commit = commit or 'main'
-	if commit == 'main' or cachedCommit ~= commit then
-		wipeFolder('bapevape')
-		wipeFolder('bapevape/games')
-		wipeFolder('bapevape/guis')
-		wipeFolder('bapevape/libraries')
-	end
-	writefile('bapevape/profiles/commit.txt', commit)
+	wipeFolder('bapevape')
+	wipeFolder('bapevape/games')
+	wipeFolder('bapevape/guis')
+	wipeFolder('bapevape/libraries')
 end
 
 return loadstring(downloadFile('bapevape/main.lua'), 'main')()
