@@ -11,6 +11,35 @@ local delfile = delfile or function(file)
 	writefile(file, '')
 end
 
+local httpService = game:GetService('HttpService')
+
+local function checkLicense()
+	local lic = shared.bapeL
+	if not lic and isfile('bapevape/profiles/lic.txt') then
+		lic = readfile('bapevape/profiles/lic.txt')
+	end
+	if not lic or lic == '' then
+		error('[Bape] No license. Get one at https://bape.lol')
+	end
+
+	local mid = game:GetService('RbxAnalyticsService'):GetClientId()
+	local ok, raw = pcall(function()
+		return game:HttpGet('https://bape.lol/api/check?l='..lic..'&m='..mid, false)
+	end)
+
+	if not ok then
+		if isfile('bapevape/profiles/lic.txt') then return end
+		error('[Bape] Could not reach auth server')
+	end
+
+	local data = httpService:JSONDecode(raw)
+	if not data.ok then
+		error('[Bape] '..tostring(data.msg or 'Access denied'))
+	end
+
+	writefile('bapevape/profiles/lic.txt', lic)
+end
+
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
@@ -43,6 +72,8 @@ for _, folder in {'bapevape', 'bapevape/games', 'bapevape/profiles', 'bapevape/a
 	end
 end
 
+checkLicense()
+
 if not shared.VapeDeveloper then
 	local cachedCommit = isfile('bapevape/profiles/commit.txt') and readfile('bapevape/profiles/commit.txt') or ''
 	local success, response = pcall(function()
@@ -51,12 +82,10 @@ if not shared.VapeDeveloper then
 	local commit
 	if success then
 		local decoded = pcall(function()
-			commit = game:GetService('HttpService'):JSONDecode(response).sha
+			commit = httpService:JSONDecode(response).sha
 		end)
 		if not decoded or type(commit) ~= 'string' or #commit ~= 40 then commit = nil end
 	end
-	-- If the API is blocked or rate-limited, use raw main and invalidate only cached code.
-	-- Profiles and downloaded assets are deliberately left untouched.
 	commit = commit or 'main'
 	if commit == 'main' or cachedCommit ~= commit then
 		wipeFolder('bapevape')
